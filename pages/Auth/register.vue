@@ -64,6 +64,27 @@
                                 </template>
                             </FormInput>
 
+                            <div class="form-group">
+                                <label class="label">
+                                    {{ stepsTitle.location }}
+                                    <span class="label-symbol">*</span>
+                                </label>
+                                <button
+                                    type="button"
+                                    class="main_input location-select-trigger d-flex align-items-center justify-content-between text-start"
+                                    :class="{ 'is-invalid': showValidation && !hasSelectedLocation }"
+                                    @click="openLocationDialog"
+                                >
+                                    <span :class="locationAddress ? 'location-value' : 'location-placeholder'">
+                                        {{ locationAddress || stepsTitle.location_placeholder }}
+                                    </span>
+                                    <i class="fa-solid fa-location-dot location-icon"></i>
+                                </button>
+                                <p v-if="showValidation && !hasSelectedLocation" class="error-message text-danger mt-1">
+                                    {{ locale === "ar" ? "هذا الحقل مطلوب" : "This field is required" }}
+                                </p>
+                            </div>
+
                             <FormInput class="step-one-password-field" v-model:modelValue="password" name="password"
                                 :type="passwordVisible ? 'text' : 'password'" :label="stepsTitle.password"
                                 :placeholder="stepsTitle.password" :validation-schema="validations.password"
@@ -250,6 +271,12 @@
                     <p v-else class="main-desc terms-dialog-desc text-center" v-html="termsContent"></p>
                 </div>
             </Dialog>
+
+            <GlobalLocationPicker
+                v-model:visible="locationDialogVisible"
+                v-model:location="selectedLocation"
+                :header="stepsTitle.location"
+            />
         </div>
     </div>
 </template>
@@ -257,6 +284,7 @@
 <script setup>
 import { useI18n } from "vue-i18n";
 import * as yup from "yup";
+import GlobalLocationPicker from "@/components/Global/LocationPicker.vue";
 
 const { t, locale } = useI18n({ useScope: "global" });
 
@@ -287,6 +315,7 @@ const showValidation = ref(false);
 const signUpForm = ref(null);
 const phoneInputRef = ref(null);
 const termsDialogVisible = ref(false);
+const locationDialogVisible = ref(false);
 const termsLoading = ref(false);
 const termsContent = ref("");
 
@@ -299,6 +328,7 @@ const email = ref("");
 const city_id = ref(null);
 const password = ref("");
 const confirmPassword = ref("");
+const selectedLocation = ref(null);
 const selectedCountry = ref({ id: 1, key: "966" });
 
 // Step 2 fields
@@ -361,6 +391,11 @@ const termsAgreementPrefix = computed(() =>
     locale.value === "ar" ? "بالتسجيل فأنت توافق على " : "By registering, you agree to "
 );
 
+const locationAddress = computed(() => selectedLocation.value?.map_desc || "");
+const hasSelectedLocation = computed(() =>
+    selectedLocation.value?.lat != null && selectedLocation.value?.lng != null
+);
+
 // Dynamic Titles & Placeholders for flawless Multi-Step UI (localized)
 const stepsTitle = computed(() => {
     return {
@@ -417,6 +452,8 @@ const stepsTitle = computed(() => {
         phone_placeholder: "55 987 6547",
         email: t("Auth.email"),
         email_placeholder: "Musa Al-Dubiyan@gmail.com",
+        location: locale.value === "ar" ? "الموقع الجغرافي" : "Location",
+        location_placeholder: locale.value === "ar" ? "اختر الموقع من الخريطة" : "Select location from map",
         agree_to_terms: t("Auth.agree_to_terms")
     };
 });
@@ -618,8 +655,9 @@ const validateStep1 = () => {
         { password: password.value, confirmPassword: confirmPassword.value },
         validations
     );
+    const hasLocation = hasSelectedLocation.value;
 
-    if (!isValid || !isConfirmPasswordValid) {
+    if (!isValid || !isConfirmPasswordValid || !hasLocation) {
         if (!isConfirmPasswordValid && password.value !== confirmPassword.value) {
             errorToast(t("validation.confirmPassword"));
         }
@@ -676,6 +714,10 @@ const nextStep = () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
+};
+
+const openLocationDialog = () => {
+    locationDialogVisible.value = true;
 };
 
 const handleBack = () => {
@@ -769,10 +811,9 @@ const signUp = async () => {
             });
         }
 
-        // Fixed location (temporary)
-        fd.append("lat", "33.24");
-        fd.append("lng", "33.587");
-        fd.append("map_desc", "mansoura");
+        fd.append("lat", String(selectedLocation.value?.lat ?? ""));
+        fd.append("lng", String(selectedLocation.value?.lng ?? ""));
+        fd.append("map_desc", selectedLocation.value?.map_desc || "");
 
         // Files
         if (uploadedLogo.value) {
@@ -899,6 +940,39 @@ const signUp = async () => {
     .step-one-password-field :deep(.main_input) {
         padding: 10px !important;
     }
+
+    .location-select-trigger {
+        padding: 12px 16px !important;
+        background-color: #fff;
+        overflow: hidden;
+    }
+
+    .location-value,
+    .location-placeholder {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 12px;
+        line-height: 20px;
+    }
+
+    .location-value {
+        color: #0f172a;
+    }
+
+    .location-placeholder {
+        color: #94a3b8;
+    }
+
+    .location-icon {
+        flex: 0 0 auto;
+        color: #0e3b64;
+        font-size: 18px;
+        margin-inline-start: 12px;
+    }
+
     :deep(.main_input::placeholder) {
         color: #94a3b8;
         font-size: 12px;

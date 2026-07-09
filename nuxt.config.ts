@@ -2,6 +2,12 @@ export default defineNuxtConfig({
 
   devtools: { enabled: false },
 
+  runtimeConfig: {
+    public: {
+      googleMapsKey: process.env.NUXT_PUBLIC_GOOGLE_MAPS_KEY || "AIzaSyBNLoYGrbnQI_GMqHt6m0PSN9yA7Zvq7gA",
+    },
+  },
+
   app: {
     pageTransition: { name: 'layout', mode: 'out-in' },
     head: {
