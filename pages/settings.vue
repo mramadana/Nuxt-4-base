@@ -94,7 +94,7 @@
               <template v-if="!uploadedLogo">
                 <i class="fa-solid fa-camera-rotate upload-icon"></i>
               </template>
-              <GlobalImgUploader ref="logoUploader" acceptedFiles="image/*" :newImages="uploadedLogo"
+              <ImgUploader ref="logoUploader" acceptedFiles="image/*" :newImages="uploadedLogo"
                 :resetTrigger="resetImageTrigger" :showValidation="showValidation" :required="false"
                 @uploaded-images-updated="updateUploadedLogo" />
             </div>
@@ -114,7 +114,7 @@
             :showErrors="showValidation" />
 
           <!-- Merchant Type (Dropdown) -->
-          <GlobalCustomDropdown v-model="provider_type" :options="merchantTypes" option-value="id"
+          <CustomDropdown v-model="provider_type" :options="merchantTypes" option-value="id"
             :placeholder="stepsTitle.select_type" :label="stepsTitle.merchant_type" :showValidation="showValidation"
             :validation-schema="validations.provider_type" />
 
@@ -124,7 +124,7 @@
             :showErrors="showValidation" />
 
           <!-- City (Dropdown) -->
-          <GlobalCustomDropdown v-model="city_id" :options="cities" option-value="id"
+          <CustomDropdown v-model="city_id" :options="cities" option-value="id"
             :placeholder="stepsTitle.select_city" :label="stepsTitle.city" :showValidation="showValidation"
             :validation-schema="validations.city_id" />
 
@@ -186,7 +186,7 @@
                 }}</span>
                 <i class="fa-regular fa-copy fz-18 main-cl"></i>
               </div>
-              <GlobalImgUploader ref="identityUploader" acceptedFiles="image/*" :newImages="uploadedIdentityImage"
+              <ImgUploader ref="identityUploader" acceptedFiles="image/*" :newImages="uploadedIdentityImage"
                 :resetTrigger="resetImageTrigger" :showValidation="showValidation" :required="true"
                 @uploaded-images-updated="updateUploadedIdentityImage" />
             </div>
@@ -219,7 +219,7 @@
                 }}</span>
                 <i class="fa-regular fa-copy fz-18 main-cl"></i>
               </div>
-              <GlobalImgUploader ref="commercialUploader" acceptedFiles="image/*" :newImages="uploadedCommercialImage"
+              <ImgUploader ref="commercialUploader" acceptedFiles="image/*" :newImages="uploadedCommercialImage"
                 :resetTrigger="resetImageTrigger" :showValidation="showValidation" :required="true"
                 @uploaded-images-updated="updateUploadedCommercialImage" />
             </div>
@@ -234,14 +234,14 @@
 
           <!-- Main Section -->
           <div class="form-group mb-4 step2-field">
-            <GlobalCustomDropdown v-model="main_section_id" :options="mainSectionOptions" option-value="id"
+            <CustomDropdown v-model="main_section_id" :options="mainSectionOptions" option-value="id"
               :placeholder="stepsTitle.section_name" :label="stepsTitle.main_section" :showValidation="showValidation"
               :multiple="true" :maxSelectedLabels="3" />
           </div>
 
           <!-- Sub Section -->
           <div class="form-group mb-4 step2-field">
-            <GlobalCustomDropdown v-model="sub_section_id" :options="subSectionOptions" option-value="id"
+            <CustomDropdown v-model="sub_section_id" :options="subSectionOptions" option-value="id"
               :placeholder="stepsTitle.section_name" :label="stepsTitle.sub_section" :showValidation="showValidation"
               :multiple="true" :maxSelectedLabels="3" />
           </div>
@@ -309,7 +309,7 @@
             {{ $t("Auth.city") }}
           </label>
           <div class="flex justify-content-center dropdown_card main_input special-custom">
-            <Dropdown v-model="city" :options="cities" filter :emptyMessage="$t('Home.no_available_options')"
+            <Select v-model="city" :options="cities" filter :emptyMessage="$t('Home.no_available_options')"
               optionLabel="name" :emptyFilterMessage="$t('Home.emptyFilterMessage')"
               :placeholder="$t('Auth.select_city')" class="w-full md:w-14rem custum-dropdown" />
           </div>

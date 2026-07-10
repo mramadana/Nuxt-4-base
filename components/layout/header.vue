@@ -55,7 +55,7 @@
               <!-- <div style="color: #fff;">{{ updateNotificationCount }} lll</div> -->
 
               <div class="AuthLang">
-                <GlobalLang :color-lang="true" />
+                <Lang :color-lang="true" />
               </div>
 
             </div>

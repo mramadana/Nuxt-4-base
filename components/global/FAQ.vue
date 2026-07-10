@@ -4,11 +4,14 @@
             <div class="main-title mb-5 text-center">{{ $t("Titles.faq") }}</div>
 
             <Accordion class="accordFaq" v-if="!loading">
-                <AccordionTab v-for="item in FAQ" :header="item.question" :key="item.id">
-                    <p class="m-0">
-                        {{ item.answer }}
-                    </p>
-                </AccordionTab>
+                <AccordionPanel v-for="(item, index) in FAQ" :key="item.id" :value="String(index)">
+                    <AccordionHeader>{{ item.question }}</AccordionHeader>
+                    <AccordionContent>
+                        <p class="m-0">
+                            {{ item.answer }}
+                        </p>
+                    </AccordionContent>
+                </AccordionPanel>
             </Accordion>
 
             <div class="accordFaq mt-5" v-if="loading">
@@ -59,7 +62,8 @@ onMounted(() => {
     font-family: 'main_font' !important;
     font-size: 14px !important;
 
-    .p-accordion-header-link {
+    .p-accordion-header-link,
+    .p-accordionheader {
         padding: 20px 10px;
         background-color: #FFF;
         display: flex;
@@ -73,8 +77,12 @@ onMounted(() => {
 
     }
 
-    .p-accordion-tab{margin: 0 !important;
-        .p-accordion-header{
+    .p-accordion-tab,
+    .p-accordionpanel {
+        margin: 0 !important;
+
+        .p-accordion-header,
+        .p-accordionheader {
             border-bottom: 1px solid #EEE;
         }
     }

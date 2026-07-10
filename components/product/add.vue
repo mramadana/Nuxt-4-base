@@ -19,7 +19,7 @@
         </div>
       </div>
 
-      <GlobalCustomDropdown
+      <CustomDropdown
         v-model="form.main_section"
         :options="mainSectionOptions"
         option-value="id"
@@ -29,7 +29,7 @@
         :validation-schema="dropdownValidations.main_section"
       />
 
-      <GlobalCustomDropdown
+      <CustomDropdown
         v-model="form.sub_section"
         :options="subSectionOptions"
         option-value="id"
@@ -40,7 +40,7 @@
         :validation-schema="dropdownValidations.sub_section"
       />
 
-      <GlobalCustomDropdown
+      <CustomDropdown
         v-model="form.base_product_id"
         :options="baseProductOptions"
         option-value="id"
@@ -50,7 +50,7 @@
         :validation-schema="dropdownValidations.base_product_id"
       />
 
-      <GlobalCustomDropdown
+      <CustomDropdown
         v-model="form.retrieval_eligibility"
         :options="retrievalOptions"
         option-value="id"
@@ -160,7 +160,7 @@
 import { computed, reactive, ref, watch, onMounted } from "vue";
 import * as Yup from "yup";
 import { useI18n } from "vue-i18n";
-import GlobalImgUploader from "~/components/Global/ImgUploader.vue";
+import GlobalImgUploader from "~/components/global/ImgUploader.vue";
 
 const { t } = useI18n();
 const router = useRouter();

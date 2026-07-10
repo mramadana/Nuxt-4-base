@@ -48,7 +48,7 @@
                                         name="phone" :placeholder="$t('Auth.please_mobile_number')">
                                 </div>
                                 <div class="card d-flex justify-content-center dropdown_card">
-                                    <Dropdown v-model="selectedCountry" :options="countries" filter optionLabel="name"
+                                    <Select v-model="selectedCountry" :options="countries" filter optionLabel="name"
                                         :emptyMessage="$t('Home.no_available_options')"
                                         :emptyFilterMessage="$t('Home.emptyFilterMessage')">
                                         <template #value="slotProps">
@@ -73,7 +73,7 @@
                                                 <div>{{ slotProps.option.key }}</div>
                                             </div>
                                         </template>
-                                    </Dropdown>
+                                    </Select>
                                 </div>
                             </div>
                         </div>
@@ -93,7 +93,7 @@
                     <div class="input_auth without-edit radius">
                         <img src="@/assets/images/upload.svg" loading="lazy" alt="default-img"
                             :class="{ 'hidden-default': uploadedImage.length > 0, 'default-class': true }">
-                        <GlobalImgUploader acceptedFiles="image/*" @uploaded-images-updated="updateUploadedImages" />
+                        <ImgUploader acceptedFiles="image/*" @uploaded-images-updated="updateUploadedImages" />
                     </div>
                 </div>
 

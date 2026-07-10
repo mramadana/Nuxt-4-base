@@ -7,7 +7,7 @@
 
       <div class="attributes-card-body">
         <div class="attributes-dropdown-wrap">
-          <GlobalCustomDropdown
+          <CustomDropdown
             v-model="form.theme"
             :options="options"
             option-value="id"
@@ -45,7 +45,7 @@
 
       <div class="form-group">
         <label class="label d-block mb-2">{{ themeItem.name }}</label>
-        <GlobalCustomDropdown
+        <CustomDropdown
           v-model="themeItem.selectedOptions"
           :options="themeItem.options"
           option-value="id"
@@ -414,7 +414,8 @@ const submitAllThemes = async () => {
   box-shadow: none;
 }
 
-.attributes-selector-card :deep(.p-dropdown-label) {
+.attributes-selector-card :deep(.p-dropdown-label),
+.attributes-selector-card :deep(.p-select-label) {
   font-size: 18px;
   color: #777;
 }
@@ -432,6 +433,7 @@ const submitAllThemes = async () => {
 }
 
 :deep(.p-dropdown),
+:deep(.p-select),
 :deep(.p-multiselect) {
   width: 100%;
 }

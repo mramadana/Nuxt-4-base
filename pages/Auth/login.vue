@@ -18,7 +18,7 @@
                                     :placeholder="$t('Auth.mobile_number')"
                                     :validation-schema="validations.phone" :showErrors="showValidation"
                                     :moveErrorToParent="true" />
-                                <GlobalCountryDropdown v-model="selectedCountry"
+                                <CountryDropdown v-model="selectedCountry"
                                     :placeholder="$t('Auth.select_country')" />
                             </div>
                             <p v-if="phoneInputRef?.shouldShowError" class="error-message text-danger mt-1"
@@ -335,14 +335,17 @@ const confirmSubscription = async () => {
         background: #fff;
     }
 
-    .with_cun_select :deep(.p-dropdown) {
+    .with_cun_select :deep(.p-dropdown),
+    .with_cun_select :deep(.p-select) {
         height: 42px;
         display: flex;
         align-items: center;
         padding: 0 8px;
+        border: 0;
     }
 
-    .with_cun_select :deep(.p-dropdown-label) {
+    .with_cun_select :deep(.p-dropdown-label),
+    .with_cun_select :deep(.p-select-label) {
         color: #0f2742;
         font-size: 12px;
         padding: 0;

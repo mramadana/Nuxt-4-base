@@ -170,10 +170,10 @@
 
     <Dialog v-model:visible="offerDialog" modal :draggable="false" header="عرض السعر" class="custum_dialog_width">
       <div class="p-2 d-flex flex-column gap-3">
-        <GlobalCustomDropdown v-model="offerForm.product_id" :options="products" option-value="id" label="المنتج"
+        <CustomDropdown v-model="offerForm.product_id" :options="products" option-value="id" label="المنتج"
           placeholder="اختر المنتج" @change="onOfferProductChange" />
 
-        <GlobalCustomDropdown v-model="offerForm.variant_id" :options="variants" option-value="id" label="النسخة"
+        <CustomDropdown v-model="offerForm.variant_id" :options="variants" option-value="id" label="النسخة"
           placeholder="اختر النسخة" />
 
         <FormInput v-model:modelValue="offerForm.price" type="number" name="offer_price" label="السعر"
@@ -209,7 +209,7 @@
     <Dialog v-model:visible="preparedDialog" modal :draggable="false" header="تجهيز الطلب"
       class="custum_dialog_width sm">
       <div class="p-2 d-flex flex-column gap-3">
-        <GlobalCustomDropdown v-model="preparedForm.delegate_id" :options="delegates" option-value="id"
+        <CustomDropdown v-model="preparedForm.delegate_id" :options="delegates" option-value="id"
           label="المندوب (اختياري)" placeholder="اختر مندوب أو اتركه فارغًا" />
         <button class="custom-btn" :disabled="actionLoading.prepared" @click="submitPrepared">
           <span v-if="!actionLoading.prepared">تأكيد</span>
@@ -221,7 +221,7 @@
     <Dialog v-model:visible="dispatchDialog" modal :draggable="false" header="تعيين مندوب"
       class="custum_dialog_width sm">
       <div class="p-2 d-flex flex-column gap-3">
-        <GlobalCustomDropdown v-model="dispatchForm.delegate_id" :options="delegates" option-value="id"
+        <CustomDropdown v-model="dispatchForm.delegate_id" :options="delegates" option-value="id"
           label="المندوب (اختياري)" placeholder="اختر مندوب أو اتركه فارغًا" />
         <button class="custom-btn" :disabled="actionLoading.dispatch" @click="submitDispatch">
           <span v-if="!actionLoading.dispatch">تأكيد</span>

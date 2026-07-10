@@ -60,7 +60,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t, locale } = useI18n({ useScope: "global" });
-const config = useRuntimeConfig();
+const { loadGoogleMaps } = useGoogleMapsLoader();
 
 const props = defineProps({
     visible: { type: Boolean, default: false },
@@ -99,80 +99,27 @@ let mapInstance = null;
 let markerInstance = null;
 let autocompleteInstance = null;
 let permissionStatus = null;
+let mapsLibraries = null;
 
 const closeDialog = () => {
     visibleProxy.value = false;
 };
 
-const waitForGoogleMaps = async () => {
-    const start = Date.now();
-
-    while (Date.now() - start < 5000) {
-        if (window.google?.maps?.Map && window.google.maps.places?.Autocomplete && window.google.maps.Geocoder) {
-            return true;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-
-    return false;
-};
-
-const loadGoogleMaps = async () => {
-    if (typeof window === "undefined") return false;
-
-    if (await waitForGoogleMaps()) return true;
-
-    const key = config.public.googleMapsKey || config.public.googleMapsApiKey;
-    if (!key) {
+const initMap = async (position) => {
+    mapsLibraries = await loadGoogleMaps(locale.value);
+    if (!mapsLibraries || !mapRef.value) {
         if (!warnedNoKey.value) {
-            console.warn("Missing public Google Maps key");
+            console.warn("Missing or failed to load Google Maps configuration");
             warnedNoKey.value = true;
         }
         return false;
     }
 
-    if (!window.__googleMapsLoadingPromise) {
-        window.__googleMapsLoadingPromise = new Promise((resolve, reject) => {
-            const existingScript = document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]');
-
-            if (existingScript) {
-                if (window.google?.maps) {
-                    resolve(true);
-                    return;
-                }
-
-                existingScript.addEventListener("load", () => resolve(true), { once: true });
-                existingScript.addEventListener("error", () => reject(new Error("Failed to load Google Maps")), { once: true });
-                return;
-            }
-
-            const script = document.createElement("script");
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places&language=${encodeURIComponent(locale.value)}`;
-            script.async = true;
-            script.defer = true;
-            script.onload = () => resolve(true);
-            script.onerror = () => reject(new Error("Failed to load Google Maps"));
-            document.head.appendChild(script);
-        });
-    }
-
-    try {
-        await window.__googleMapsLoadingPromise;
-        return await waitForGoogleMaps();
-    } catch {
-        return false;
-    }
-};
-
-const initMap = async (position) => {
-    const ready = await loadGoogleMaps();
-    if (!ready || !mapRef.value) return false;
-
     destroyMap();
 
     const nextCenter = { lat: Number(position.lat), lng: Number(position.lng) };
 
-    mapInstance = new window.google.maps.Map(mapRef.value, {
+    mapInstance = new mapsLibraries.Map(mapRef.value, {
         center: nextCenter,
         zoom: props.zoom,
         mapTypeControl: false,
@@ -180,7 +127,7 @@ const initMap = async (position) => {
         fullscreenControl: false,
     });
 
-    markerInstance = new window.google.maps.Marker({
+    markerInstance = new mapsLibraries.Marker({
         position: nextCenter,
         map: mapInstance,
         draggable: true,
@@ -194,8 +141,8 @@ const initMap = async (position) => {
         await setLocation({ lat: event.latLng.lat(), lng: event.latLng.lng() });
     });
 
-    if (autocompleteRef.value && window.google.maps.places?.Autocomplete) {
-        autocompleteInstance = new window.google.maps.places.Autocomplete(autocompleteRef.value, {
+    if (autocompleteRef.value && mapsLibraries.Autocomplete) {
+        autocompleteInstance = new mapsLibraries.Autocomplete(autocompleteRef.value, {
             fields: ["geometry", "formatted_address", "name"],
         });
         autocompleteInstance.addListener("place_changed", onPlaceChanged);
@@ -224,10 +171,10 @@ const destroyMap = () => {
 
 const reverseGeocode = async (lat, lng) => {
     try {
-        const ready = await loadGoogleMaps();
-        if (!ready) return "";
+        mapsLibraries = mapsLibraries || await loadGoogleMaps(locale.value);
+        if (!mapsLibraries?.Geocoder) return "";
 
-        const geocoder = new window.google.maps.Geocoder();
+        const geocoder = new mapsLibraries.Geocoder();
         return await new Promise((resolve) => {
             geocoder.geocode({ location: { lat, lng }, language: locale.value }, (results, status) => {
                 if (status === "OK" && Array.isArray(results) && results.length > 0) {
@@ -244,6 +191,7 @@ const reverseGeocode = async (lat, lng) => {
 
 const reverseGeocodeRest = async (lat, lng) => {
     try {
+        const config = useRuntimeConfig();
         const key = config.public.googleMapsKey || config.public.googleMapsApiKey;
         if (!key) return "";
 

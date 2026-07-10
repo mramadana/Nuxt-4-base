@@ -737,7 +737,8 @@ body {
   }
 }
 
-.p-dropdown-item-label {
+.p-dropdown-item-label,
+.p-select-option-label {
   font-size: 14px;
 }
 
@@ -813,7 +814,8 @@ body {
   .dropdown_card {
       width: 130px;
       flex-shrink: 0;
-      .p-dropdown-label {
+      .p-dropdown-label,
+      .p-select-label {
           font-size: 12px;
           padding: 5px;
           > .d-flex {
@@ -828,12 +830,15 @@ body {
       }
   }
 
-  .p-dropdown {
+  .p-dropdown,
+  .p-select {
     padding: 0 7px;
     box-shadow: none;
-    .p-dropdown-trigger {
+    .p-dropdown-trigger,
+    .p-select-dropdown {
         width: 17px;
-        .p-icon {
+        .p-icon,
+        .p-select-dropdown-icon {
         height: 13px;
         }
     }
@@ -852,15 +857,20 @@ body {
   border: 1px solid #dddddd;
   border-radius: 5px;
   overflow: hidden;
-  .p-dropdown-label, .p-multiselect-label {
+  .p-dropdown-label, .p-select-label, .p-multiselect-label {
     font-size: 13px;
     color: #000;
   }
 
-  .p-dropdown {
+  .p-dropdown,
+  .p-select {
     outline: 0 !important;
     box-shadow: none !important;
     width: 100%;
+    height: 42px;
+    border: 0;
+    display: flex;
+    align-items: center;
   }
   &::placeholder {
     font-size: 12px;
@@ -882,7 +892,7 @@ body {
   }
 }
 
-.pointer, .p-calendar {
+.pointer, .p-calendar, .p-datepicker {
   cursor: pointer;
 }
 
@@ -1834,7 +1844,8 @@ input.p-inputtext.p-component {
   }
 }
 
-.p-calendar:not(.p-calendar-disabled).p-focus > .p-inputtext {
+.p-calendar:not(.p-calendar-disabled).p-focus > .p-inputtext,
+.p-datepicker.p-focus > .p-inputtext {
   box-shadow: none !important;
 }
 
@@ -2077,7 +2088,8 @@ input.p-inputtext.p-component {
   }
 }
 
-.p-dropdown-trigger {
+.p-dropdown-trigger,
+.p-select-dropdown {
   width: .8rem;
 }
 
@@ -2352,7 +2364,8 @@ input.p-inputtext.p-component {
   border-radius: 50%;
 }
 
-.p-accordion-header-link {
+.p-accordion-header-link,
+.p-accordionheader {
     svg {
       #{$ltr} & {
         transform: scaleX(1);
@@ -2622,9 +2635,12 @@ input.p-inputtext.p-component {
   }
 
   // Remove arrows from PrimeVue Dropdown
-  .p-dropdown {
-    .p-dropdown-trigger {
-      .p-dropdown-trigger-icon {
+  .p-dropdown,
+  .p-select {
+    .p-dropdown-trigger,
+    .p-select-dropdown {
+      .p-dropdown-trigger-icon,
+      .p-select-dropdown-icon {
         &::before {
           display: none;
         }

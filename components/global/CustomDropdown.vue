@@ -23,15 +23,13 @@
                 :emptyMessage="$t('Global.no_available_options')"
                 :emptyFilterMessage="$t('Global.emptyFilterMessage')"
             />
-            <Dropdown 
+            <Select
                 v-else
                 v-model="internalValue"
                 optionLabel="name" 
                 :optionValue="props.optionValue"
-                display="chip"
                 :options="options" 
                 :placeholder="placeholder"
-                :maxSelectedLabels="maxSelectedLabels" 
                 class="custom-dropdown"
                 @change="handleChange"
                 :disabled="disabled"
@@ -138,6 +136,7 @@
     }
 
     :deep(.p-dropdown-label),
+    :deep(.p-select-label),
     :deep(.p-multiselect-label) {
         font-size: 14px;
         color: #333;
@@ -148,6 +147,7 @@
     }
 
     :deep(.p-dropdown-trigger),
+    :deep(.p-select-dropdown),
     :deep(.p-multiselect-trigger) {
         width: auto;
         color: #999;

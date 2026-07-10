@@ -29,7 +29,7 @@
                                             :placeholder="$t('Auth.please_mobile_number')">
                                     </div>
                                     <div class="card d-flex justify-content-center dropdown_card">
-                                        <Dropdown v-model="selectedCountry" :options="countries" optionLabel="name"
+                                        <Select v-model="selectedCountry" :options="countries" optionLabel="name"
                                             disabled>
                                             <template #value="slotProps">
                                                 <div v-if="slotProps.value" class="flex-group-me">
@@ -50,7 +50,7 @@
                                                     <div>{{ slotProps.option.key }}</div>
                                                 </div>
                                             </template>
-                                        </Dropdown>
+                                        </Select>
                                     </div>
                                 </div>
                             </div>
@@ -60,7 +60,7 @@
                                     {{ $t('Auth.city') }}
                                 </label>
                                 <div class="flex justify-content-center dropdown_card main_input special-custom">
-                                    <Dropdown v-model="city" disabled :options="cities"
+                                    <Select v-model="city" disabled :options="cities"
                                         :emptyMessage="$t('Home.no_available_options')" optionLabel="name"
                                         :placeholder="$t('Auth.select_city')"
                                         class="w-full md:w-14rem custum-dropdown" />
@@ -72,7 +72,7 @@
                                     {{ $t('Auth.neighborhood') }}
                                 </label>
                                 <div class="flex justify-content-center dropdown_card main_input special-custom">
-                                    <Dropdown v-model="neighborhood" disabled :options="neighborhoods"
+                                    <Select v-model="neighborhood" disabled :options="neighborhoods"
                                         :emptyMessage="$t('Home.no_available_options')" optionLabel="name"
                                         :placeholder="$t('Auth.select_neighborhood')"
                                         class="w-full md:w-14rem custum-dropdown" />

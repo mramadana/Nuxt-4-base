@@ -1,6 +1,6 @@
 <template>
     <div class="card d-flex justify-content-center dropdown_card country-dropdown-card">
-        <Dropdown v-model="internalValue" :options="countries" filter optionLabel="name" :placeholder="placeholder"
+        <Select v-model="internalValue" :options="countries" filter optionLabel="name" :placeholder="placeholder"
             :emptyMessage="$t('Global.no_available_options')" :emptyFilterMessage="$t('Global.emptyFilterMessage')">
             <template #value="slotProps">
                 <div v-if="slotProps.value" class="flex-group-me">
@@ -22,7 +22,7 @@
                     <div>{{ slotProps.option.key }}</div>
                 </div>
             </template>
-        </Dropdown>
+        </Select>
     </div>
 </template>
 

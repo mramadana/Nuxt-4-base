@@ -47,7 +47,7 @@
                                             <i class="fa-solid fa-mobile-screen-button register-field-icon"></i>
                                         </template>
                                     </FormInput>
-                                    <GlobalCountryDropdown v-model="selectedCountry"
+                                    <CountryDropdown v-model="selectedCountry"
                                         :placeholder="stepsTitle.select_country" />
                                 </div>
                                 <p v-if="phoneInputRef?.shouldShowError" class="error-message text-danger mt-1"
@@ -148,7 +148,7 @@
                                         <span class="legal-upload-title">{{ stepsTitle.upload_files }}</span>
                                         <span class="legal-upload-hint">{{ stepsTitle.upload_files_hint }}</span>
                                     </div>
-                                    <GlobalImgUploader ref="commercialUploader" acceptedFiles="image/*,application/pdf"
+                                    <ImgUploader ref="commercialUploader" acceptedFiles="image/*,application/pdf"
                                         :resetTrigger="resetImageTrigger" :maxFiles="1"
                                         @uploaded-images-updated="updateUploadedCommercialImage" />
                                 </div>
@@ -181,7 +181,7 @@
                                         <span class="legal-upload-title">{{ stepsTitle.upload_files }}</span>
                                         <span class="legal-upload-hint">{{ stepsTitle.upload_files_hint }}</span>
                                     </div>
-                                    <GlobalImgUploader ref="identityUploader" acceptedFiles="image/*,application/pdf"
+                                    <ImgUploader ref="identityUploader" acceptedFiles="image/*,application/pdf"
                                         :resetTrigger="resetImageTrigger" :maxFiles="1"
                                         @uploaded-images-updated="updateUploadedIdentityImage" />
                                 </div>
@@ -284,7 +284,7 @@
 <script setup>
 import { useI18n } from "vue-i18n";
 import * as yup from "yup";
-import GlobalLocationPicker from "@/components/Global/LocationPicker.vue";
+import GlobalLocationPicker from "@/components/global/LocationPicker.vue";
 
 const { t, locale } = useI18n({ useScope: "global" });
 
@@ -1020,14 +1020,16 @@ const signUp = async () => {
         background: #fff;
     }
 
-    .with_cun_select :deep(.p-dropdown) {
+    .with_cun_select :deep(.p-dropdown),
+    .with_cun_select :deep(.p-select) {
         height: 46px;
         display: flex;
         align-items: center;
         padding: 0 8px;
     }
 
-    .with_cun_select :deep(.p-dropdown-label) {
+    .with_cun_select :deep(.p-dropdown-label),
+    .with_cun_select :deep(.p-select-label) {
         color: #000;
         font-size: 14px;
         line-height: 24px;
@@ -1738,6 +1740,7 @@ const signUp = async () => {
     }
 
     :deep(.p-dropdown-label),
+    :deep(.p-select-label),
     :deep(.p-multiselect-label) {
         font-size: 16px;
         line-height: 24px;
@@ -1826,7 +1829,8 @@ const signUp = async () => {
             border-color: var(--main);
         }
 
-        .p-dropdown-label {
+        .p-dropdown-label,
+        .p-select-label {
             padding: 0;
             font-size: 14px;
             color: #333;
@@ -1835,7 +1839,8 @@ const signUp = async () => {
             background: transparent;
         }
 
-        .p-dropdown-trigger {
+        .p-dropdown-trigger,
+        .p-select-dropdown {
             width: auto;
             color: #999;
         }

@@ -27,7 +27,7 @@
                                             <input type="number" class="custum-input-icon validInputs" valid="phone" name="phone" :placeholder="$t('Auth.please_mobile_number')">
                                         </div>
                                         <div class="card d-flex justify-content-center dropdown_card">
-                                        <Dropdown
+                                        <Select
                                         v-model="selectedCountry"
                                         :options="countries"
                                         filter
@@ -62,7 +62,7 @@
                                                 <div>{{ slotProps.option.key }}</div>
                                             </div>
                                         </template>
-                                        </Dropdown>
+                                        </Select>
                                         </div>
                                     </div>
                                 </div>

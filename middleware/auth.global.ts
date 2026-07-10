@@ -3,9 +3,18 @@ export default defineNuxtRouteMiddleware((to) => {
   if (import.meta.server) return;
 
   // Read auth cookie directly to avoid Pinia hydration timing issues
-  const authCookie = useCookie('auth');
-  const authData = authCookie.value ? authCookie.value : null;
-  const isLoggedIn = authData?.isLoggedIn || false;
+  const authCookie = useCookie<string | null>('auth');
+  const authValue = authCookie.value;
+  let isLoggedIn = false;
+
+  if (typeof authValue === 'string') {
+    try {
+      const parsed = JSON.parse(authValue);
+      isLoggedIn = Boolean(parsed?.isLoggedIn);
+    } catch {
+      isLoggedIn = false;
+    }
+  }
 
   // Public routes that don't require authentication
   const publicRoutes = [

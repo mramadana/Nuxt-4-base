@@ -213,12 +213,14 @@ color: var(--main);
   }
 }
 
-.p-dropdown-panel .p-dropdown-header .p-dropdown-filter {
+.p-dropdown-panel .p-dropdown-header .p-dropdown-filter,
+.p-select-overlay .p-select-header .p-select-filter {
   height: 30px;
   font-size: 13px;
 }
 
-.p-dropdown-empty-message {
+.p-dropdown-empty-message,
+.p-select-empty-message {
   font-size: 13px;
 }
 

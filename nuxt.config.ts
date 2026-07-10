@@ -1,3 +1,5 @@
+import Lara from "@primeuix/themes/lara";
+
 export default defineNuxtConfig({
 
   devtools: { enabled: false },
@@ -23,7 +25,7 @@ export default defineNuxtConfig({
       ],
       script: [
         {
-          children: `
+          innerHTML: `
             (function () {
               const savedLang = localStorage.getItem("locale") || "ar";
               const html = document.documentElement;
@@ -34,7 +36,6 @@ export default defineNuxtConfig({
             })();
           `,
           type: "text/javascript",
-          defer: true,
         },
       ],
     },
@@ -43,30 +44,35 @@ export default defineNuxtConfig({
 
   css: [
     "bootstrap/dist/css/bootstrap.rtl.css",
-    "primevue/resources/themes/lara-light-green/theme.css",
-    "primevue/resources/primevue.min.css",
     "@fortawesome/fontawesome-svg-core/styles.css",
     "~/assets/css/style.scss",
   ],
 
   // primevue
   modules: [
-    'nuxt-primevue',
+    '@primevue/nuxt-module',
     "@pinia/nuxt",
     '@pinia-plugin-persistedstate/nuxt',
   ],
+
+  primevue: {
+    options: {
+      theme: {
+        preset: Lara,
+        options: {
+          prefix: "p",
+          darkModeSelector: false,
+          cssLayer: false,
+        },
+      },
+    },
+  },
 
   vite: {
     define: {
       "process.env.DEBUG": false,
     },
   },
-
-  build: {
-    transpile: ["@fawmi/vue-google-maps"],
-  },
-
-
 })
 
 
