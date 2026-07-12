@@ -485,8 +485,8 @@
 <script setup>
 definePageMeta({
   name: "Home.settings",
-  authIsRequired: true,
-  middleware: "auth",
+  // authIsRequired: true,
+  // middleware: "auth",
 });
 
 const successDialogVisible = ref(false);

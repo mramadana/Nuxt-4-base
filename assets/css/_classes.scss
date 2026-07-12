@@ -85,15 +85,6 @@ color: var(--main);
 }
 }
 
-.otpInput-container {
-  margin-bottom: 15px;
-
-  div:first-child {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-  }
-}
 
 .otp-input.is-complete {
   border-color: var(--main);
@@ -551,15 +542,6 @@ color: var(--main);
   }
 }
 
-.mr-top {
-  margin-top: 70px;
-  @media (max-width: $screen-md) {
-    margin-top: 50px;
-  }
-  @media (max-width: $screen-xs) {
-     margin-top: 40px;
-  }
-}
 
 .cart-foot {
   position: relative;
@@ -607,104 +589,9 @@ color: var(--main);
   background: transparent;
 }
 
-.login-page {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 50px 15px;
-  background-color: #fff;
-}
-
-.login-form {
-  margin-top: 30px;
-}
 
 .product_retrieval_text {
   font-size: 13px;
   color:var(--main);
   margin-bottom: 5px;
 }
-
-.delivery-banner {
-  background-color: #FFE5D4;
-  border-radius: 10px;
-  padding: 15px 20px;
-  .delivery-text {
-      color: #FF7C17;
-      font-size: 16px;
-      font-weight: 500;
-      margin: 0;
-      @media (max-width: 768px) {
-          font-size: 14px;
-      }
-  }
-}
-
-
-.orders-dropdown {
-    position: relative;
-
-    .dropdown-toggle {
-        background: transparent;
-        border: 0;
-        padding: 0;
-        cursor: pointer;
-
-        &::after {
-            display: none;
-        }
-    }
-}
-
-.orders-dropdown-menu {
-    min-width: 160px;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 6px 0;
-    margin-top: 8px !important;
-
-    .dropdown-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 14px;
-        color: #363636;
-        font-size: 14px;
-        text-decoration: none;
-        transition: all 0.2s ease;
-
-        .order-icon {
-            width: 18px;
-            height: 18px;
-            object-fit: contain;
-        }
-
-        &:hover {
-            background: #f5f5f5;
-            color: var(--main);
-        }
-
-        // &.router-link-active {
-        //     background: #f0f7ff;
-        //     color: var(--main);
-        // }
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

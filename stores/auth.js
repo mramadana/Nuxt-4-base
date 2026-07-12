@@ -22,7 +22,6 @@ export const useAuthStore = defineStore("auth", {
     token: null,
     isLoggedIn: false,
     newPhone: null,
-    device_id: null,
     mac_address: null,
     notificationToken: null,
     test: 'test key',
@@ -56,26 +55,19 @@ export const useAuthStore = defineStore("auth", {
       };
     },
 
-    ensureDeviceId() {
-      if (!process.client) return null;
-
-      if (!localStorage.getItem("device_id")) {
-        const id = Math.random().toString(36).substring(2, 12);
-        localStorage.setItem("device_id", id);
-        this.device_id = id;
-      } else {
-        this.device_id = localStorage.getItem("device_id");
-      }
-
-      return this.device_id;
-    },
 
     // Sign In
     async signInHandler(formData) {
       try {
+        if (process.client && formData instanceof FormData) {
+          if (!formData.has("device_id")) formData.append("device_id", this.notificationToken);
+          if (!formData.has("device_type")) formData.append("device_type", "web");
+          if (!formData.has("lang")) formData.append("lang", localStorage.getItem("locale") || "ar");
+        }
+
         const resData = await axios.post("provider/sign-in", formData, {
           headers: {
-            Lang: localStorage.getItem("locale"),
+            Lang: process.client ? localStorage.getItem("locale") : undefined,
           },
         });
 

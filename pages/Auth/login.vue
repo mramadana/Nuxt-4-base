@@ -137,8 +137,8 @@ const { successToast, errorToast } = toastMsg();
 // Store
 const store = useAuthStore();
 
-const { signInHandler, ensureDeviceId } = store;
-const { device_id, user } = storeToRefs(store);
+const { signInHandler } = store;
+const { notificationToken, user } = storeToRefs(store);
 
 const loading = ref(false);
 const showValidation = ref(false);
@@ -184,10 +184,10 @@ const login = async () => {
         loading.value = true;
 
         try {
-            const deviceId = ensureDeviceId();
             const fd = new FormData(loginForm.value);
-            fd.append('device_id', deviceId || device_id.value || '1234');
+            fd.append('device_id', notificationToken.value);
             fd.append('device_type', 'web');
+            fd.append('lang', locale.value || 'ar');
             fd.append('country_code', selectedCountry.value?.key || '966');
 
             // Get Returned Data From Store
@@ -208,9 +208,6 @@ const login = async () => {
     }
 }
 
-onMounted(() => {
-    ensureDeviceId();
-});
 
 // Confirm subscription and proceed
 const confirmSubscription = async () => {
