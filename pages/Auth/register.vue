@@ -467,31 +467,27 @@ const axios = useApi();
 const { response } = responseApi();
 const { isFormValid, scrollToFirstError } = useFormValidation();
 
-// Fetch Cities from Backend API
-const getCities = async () => {
-    try {
-        const res = await axios.get('cities');
-        if (response(res) === "success" || res.data.key === "success") {
-            cities.value = res.data.data;
-        }
-    } catch (err) {
-        console.error("Fetch cities error:", err);
-    }
-};
-
 const allCategoriesWithSubs = ref([]);
 
-const getMainSections = async () => {
-    try {
-        const res = await axios.get(`main-categories?lang=${locale.value || 'ar'}`);
-        if (response(res) === "success" || res.data.key === "success") {
-            allCategoriesWithSubs.value = res.data.data;
-            mainSectionOptions.value = res.data.data;
-        }
-    } catch (err) {
-        console.error("Fetch categories error:", err);
-    }
-};
+const { payload: citiesPayload } = await useApiData("cities", {
+    cacheKey: "api:cities",
+});
+
+const { payload: mainCategoriesPayload } = await useApiData("main-categories", {
+    cacheKey: `api:main-categories:${locale.value || "ar"}`,
+    query: computed(() => ({
+        lang: locale.value || "ar",
+    })),
+});
+
+watchEffect(() => {
+    cities.value = citiesPayload.value || [];
+});
+
+watchEffect(() => {
+    allCategoriesWithSubs.value = mainCategoriesPayload.value || [];
+    mainSectionOptions.value = mainCategoriesPayload.value || [];
+});
 
 const getSubSections = (mainIds) => {
     if (!mainIds || mainIds.length === 0) {
@@ -544,11 +540,6 @@ const openTermsDialog = async () => {
         await getTermsContent();
     }
 };
-
-onMounted(() => {
-    getCities();
-    getMainSections();
-});
 
 watch(main_section_id, (newVal) => {
     getSubSections(newVal);

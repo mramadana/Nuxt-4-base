@@ -11,19 +11,13 @@
 </template>
 
 <script setup>
-
-const store = useAuthStore();
-
-const social = ref([]);
-
-onMounted( async () => {
-    await store.fetchSocialData();
-    social.value = store.social;
+const {
+  payload: socialPayload,
+} = await useApiData("socials", {
+  cacheKey: "api:socials",
 });
 
-watch(() => store.social, (newSocialData) => {
-  social.value = newSocialData;
-});
+const social = computed(() => socialPayload.value || []);
 
 </script>
 

@@ -119,10 +119,7 @@
 
 <script setup>
 
-    // store
-    const store = useAuthStore();   
-
-    const { countries, token } = storeToRefs(store);
+    const { token } = storeToRefs(useAuthStore());
     
     const errors = ref([]);
     const loading = ref(false);
@@ -179,16 +176,18 @@
         loading.value = false;
     }
 
-    onMounted( async () => {
+    const { payload: countriesPayload } = await useApiData("countries", {
+        cacheKey: "api:countries",
+    });
 
-        const result = await store.getCountriesHandler();
-  
-        if (result.status === "success") {
-            const defaultCountry = store.countries.find(country => country.id == 1);
-            
-            if (defaultCountry) {
+    watchEffect(() => {
+        if (selectedCountry.value) return;
+
+        const countries = countriesPayload.value || [];
+        const defaultCountry = countries.find(country => country.id == 1) || countries[0];
+
+        if (defaultCountry) {
             selectedCountry.value = { ...defaultCountry };
-            }
         }
     });
 

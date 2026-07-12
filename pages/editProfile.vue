@@ -50,8 +50,8 @@
 <script setup>
     definePageMeta({
         name: "Home.edit_profile",
-        authIsRequired: true,
-        middleware: 'auth'
+        // authIsRequired: true,
+        // middleware: 'auth'
     });
 
 import { useI18n } from 'vue-i18n';
@@ -59,43 +59,39 @@ const { t } = useI18n({ useScope: 'global' });
 
 // pinia store
 import { useAuthStore } from '~/stores/auth';
-import { useGlobalStore } from '~/stores/global';
 
 
 // Store
 const store = useAuthStore();
-const globalStore = useGlobalStore();
-
-// success response
-const { response } = responseApi();
 
 const { profileHandler } = store;
 
 // // Toast
 const { successToast, errorToast } = toastMsg();
 
-// // Axios
-const axios = useApi();
-
-
 /******************* Data *******************/
 
-const image = ref('');
-const name = ref('');
 const successfullyChange = ref(false);
 const errors = ref([]);
 
 const loading = ref(false);
-
-const { token } = storeToRefs(store);
-
-
 const uploadedImage = ref([]);
 const editProfileform = ref(null);
 
-const config = {
-        headers: { Authorization: `Bearer ${token.value}` }
-    };
+const {
+    payload: profilePayload,
+} = await useApiData('provider/profile', {
+    auth: true,
+    cacheKey: 'api:edit-profile',
+});
+
+const image = computed(() => profilePayload.value?.image || '');
+const name = ref('');
+
+watchEffect(() => {
+    const currentName = profilePayload.value?.name;
+    name.value = currentName?.ar || currentName?.en || currentName || '';
+});
 
         // Validation Function
         function validate() {
@@ -106,14 +102,6 @@ const config = {
             }
         }
     };
-
-    //  get profile data
-    const profile = async () => {
-        await axios.get('profile', config).then(res => {
-            name.value = res.data.data.name;
-            image.value = res.data.data.image;
-        }).catch(err => console.log(err));
-    }
 
     const editProfile = async () => {
         loading.value = true;
@@ -139,10 +127,4 @@ const config = {
         loading.value = false;
 
     }
-
-    onMounted(() => {
-        profile();
-    })
-    
-
 </script>

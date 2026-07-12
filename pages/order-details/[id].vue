@@ -310,10 +310,28 @@ const {
   acceptToSendDelegateContact,
 } = useProviderOrdersApi();
 
-const loading = ref(true);
-const order = ref(null);
-
 const isNormalOrder = computed(() => route.query.type !== 'retrieval');
+const orderEndpoint = computed(() =>
+  isNormalOrder.value
+    ? `provider/orders/details/${id}`
+    : `provider/retrieval-orders/details/${id}`,
+);
+
+const {
+  payload: orderPayload,
+  pending: loading,
+  refresh: refreshOrderDetails,
+  message: orderMessage,
+} = await useApiData(() => orderEndpoint.value, {
+  auth: true,
+  watch: [isNormalOrder],
+});
+
+const order = ref(orderPayload.value || null);
+
+watchEffect(() => {
+  order.value = orderPayload.value || null;
+});
 
 const offerDialog = ref(false);
 const invoiceIssueDialog = ref(false);
@@ -503,25 +521,17 @@ const finalPriceLabel = computed(() => {
 });
 
 const fetchDetails = async () => {
-  loading.value = true;
   try {
-    const result = isNormalOrder.value
-      ? await getNormalOrderDetails(id)
-      : await getRetrievalOrderDetails(id);
+    await refreshOrderDetails();
+    order.value = orderPayload.value || null;
 
-    if (!result.ok) {
-      errorToast(result.msg || 'Failed to load order details');
-      order.value = null;
-      return;
+    if (!order.value) {
+      errorToast(orderMessage.value || 'Failed to load order details');
     }
-
-    order.value = result.data;
   } catch (err) {
     console.error(err);
     errorToast(err?.response?.data?.msg || 'Failed to load order details');
     order.value = null;
-  } finally {
-    loading.value = false;
   }
 };
 
@@ -831,9 +841,6 @@ const openInvoiceDialog = async () => {
   }
 };
 
-onMounted(async () => {
-  await fetchDetails();
-});
 </script>
 
 <style scoped lang="scss">

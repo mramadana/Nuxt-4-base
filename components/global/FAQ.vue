@@ -25,29 +25,14 @@
 </template>
 
 <script setup>
-
-const loading = ref(true);
-const { response } = responseApi();
-
-const axios = useApi();
-
-const FAQ = ref([]);
-
-
-const getData = async () => {
-  loading.value = true;
-  await axios.get('fqss').then(res => {
-    if (response(res) == "success") {
-      FAQ.value = res.data.data;
-    }
-    loading.value = false;
-  }).catch(err => console.log(err));
-};
-
-
-onMounted(() => {
-    getData();
+const {
+  payload: faqPayload,
+  pending: loading,
+} = await useApiData("fqss", {
+  cacheKey: "api:faq",
 });
+
+const FAQ = computed(() => faqPayload.value || []);
 
 </script>
 

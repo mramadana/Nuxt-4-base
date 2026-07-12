@@ -21,7 +21,7 @@
       </nav>
 
       <div class="sidebar-bottom">
-        <nuxt-link class="sidebar-link" to="/settings" :class="{ active: isActiveLink('/settings') }">
+        <nuxt-link v-if="isLoggedIn" class="sidebar-link" to="/settings" :class="{ active: isActiveLink('/settings') }">
           <i class="fa-solid fa-gear sidebar-fa-icon"></i>
           <span>{{ currentLocale === 'ar' ? 'الإعدادات' : 'Settings' }}</span>
         </nuxt-link>
@@ -31,7 +31,7 @@
           <span>{{ currentLocale === 'ar' ? 'المساعدة' : 'Help' }}</span>
         </nuxt-link>
 
-        <button type="button" class="sidebar-link logout-link" @click="logoutDialog = true">
+        <button v-if="isLoggedIn" type="button" class="sidebar-link logout-link" @click="logoutDialog = true">
           <i class="fa-solid fa-right-from-bracket logout-icon"></i>
           <span>{{ currentLocale === 'ar' ? 'تسجيل الخروج' : 'Logout' }}</span>
         </button>
@@ -86,6 +86,7 @@ const logoutDialog = ref(false);
 const logoutLoading = ref(false);
 
 const store = useAuthStore();
+const { isLoggedIn } = storeToRefs(store);
 const { logoutHandler } = store;
 const { successToast, errorToast } = toastMsg();
 
@@ -97,27 +98,27 @@ const primaryMenuItems = computed(() => [
   },
   {
     label: currentLocale.value === "ar" ? "المنتجات" : "Products",
-    to: "/products",
+    to: "/",
     icon: productsIcon,
   },
   {
     label: currentLocale.value === "ar" ? "الطلبات" : "Orders",
-    to: "/orders-main",
+    to: "/",
     icon: ordersIcon,
   },
   {
     label: currentLocale.value === "ar" ? "المخزون" : "Inventory",
-    to: "/inventory",
+    to: "/terms",
     icon: inventoryIcon,
   },
   {
     label: currentLocale.value === "ar" ? "الدفعات / الأرصدة" : "Payments / Balances",
-    to: "/commission",
+    to: "/",
     icon: paymentsIcon,
   },
   {
     label: currentLocale.value === "ar" ? "المالية" : "Financial",
-    to: "/FinancialTransactions",
+    to: "/",
     icon: financialIcon,
   },
 ]);

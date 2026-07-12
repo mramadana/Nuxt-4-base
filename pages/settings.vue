@@ -677,16 +677,13 @@ const stepsTitle = computed(() => ({
 // Fetch main/sub sections
 const allCategoriesWithSubs = ref([]);
 
-const getMainSections = async () => {
-  try {
-    const res = await axios.get(`main-categories?lang=${locale.value || "ar"}`);
-    if (response(res) === "success" || res.data.key === "success") {
-      allCategoriesWithSubs.value = res.data.data;
-      mainSectionOptions.value = res.data.data;
-    }
-  } catch (err) {
-    console.error("Fetch categories error:", err);
+const getMainSections = async (shouldRefresh = false) => {
+  if (shouldRefresh) {
+    await refreshMainCategories();
   }
+  const data = mainCategoriesPayload.value || [];
+  allCategoriesWithSubs.value = data;
+  mainSectionOptions.value = data;
 };
 
 const getSubSections = (mainIds) => {
@@ -759,49 +756,37 @@ const onSelectProfileImage = (e) => {
 };
 
 // Get Profile Data
-const getProfile = async () => {
-  try {
-    const res = await axios.get("provider/profile", config.value);
-    if (response(res) === "success") {
-      const data = res.data.data;
+const getProfile = async (shouldRefresh = false) => {
+  if (shouldRefresh) {
+    await refreshSettingsProfile();
+  }
+  const data = settingsProfilePayload.value;
+  if (!data) return;
 
-      // Merchant Tab
-      name_ar.value = data.name?.ar || "";
-      name_en.value = data.name?.en || "";
-      provider_type.value = data.type?.name || "";
-      email.value = data.email || "";
-      city_id.value = data.city?.id || null;
-      uploadedLogo.value = data.image || null;
+  name_ar.value = data.name?.ar || "";
+  name_en.value = data.name?.en || "";
+  provider_type.value = data.type?.name || "";
+  email.value = data.email || "";
+  city_id.value = data.city?.id || null;
+  uploadedLogo.value = data.image || null;
 
-      // Work Tab
-      description_ar.value = data.description?.ar || "";
-      description_en.value = data.description?.en || "";
-      commercial_number.value = data.commercial_number || "";
-      uploadedIdentityImage.value = data.identity_image || null;
-      uploadedCommercialImage.value = data.commercial_image || null;
+  description_ar.value = data.description?.ar || "";
+  description_en.value = data.description?.en || "";
+  commercial_number.value = data.commercial_number || "";
+  uploadedIdentityImage.value = data.identity_image || null;
+  uploadedCommercialImage.value = data.commercial_image || null;
 
-      // Categories - load all selected
-      if (data.main_categories?.length) {
-        main_section_id.value = data.main_categories.map((cat) => cat.id);
-        // Trigger sub-categories load
-        if (main_section_id.value.length > 0) {
-          getSubSections(main_section_id.value);
-        }
-      }
-      if (data.sub_categories?.length) {
-        sub_section_id.value = data.sub_categories.map((cat) => cat.id);
-      }
+  main_section_id.value = data.main_categories?.map((cat) => cat.id) || [];
+  sub_section_id.value = data.sub_categories?.map((cat) => cat.id) || [];
+  if (main_section_id.value.length > 0) {
+    getSubSections(main_section_id.value);
+  }
 
-      // Bank Tab
-      if (data.bank_account_info) {
-        bank_name.value = data.bank_account_info.bank_name || "";
-        account_name.value = data.bank_account_info.bank_account_name || "";
-        account_number.value = data.bank_account_info.bank_account_number || "";
-        iban.value = data.bank_account_info.iban || "";
-      }
-    }
-  } catch (err) {
-    console.error("Get profile error:", err);
+  if (data.bank_account_info) {
+    bank_name.value = data.bank_account_info.bank_name || "";
+    account_name.value = data.bank_account_info.bank_account_name || "";
+    account_number.value = data.bank_account_info.bank_account_number || "";
+    iban.value = data.bank_account_info.iban || "";
   }
 };
 
@@ -874,8 +859,8 @@ const updateProfile = async () => {
       if (res.data.data) {
         user.value = res.data.data;
       }
-      // Refresh profile data
-      // await getProfile();
+      await Promise.all([refreshSettingsProfile(), refreshInlineProfile()]);
+      await Promise.all([getProfile(), profileData()]);
     } else {
       errorToast(res.data.msg);
     }
@@ -1184,6 +1169,40 @@ const config = computed(() => {
   return { headers: { Authorization: `Bearer ${token.value}` } };
 });
 
+const {
+  payload: settingsProfilePayload,
+  refresh: refreshSettingsProfile,
+} = await useApiData("provider/profile", {
+  auth: true,
+  cacheKey: "api:settings:provider-profile",
+});
+
+const inlineProfilePayload = settingsProfilePayload;
+const refreshInlineProfile = refreshSettingsProfile;
+
+const {
+  payload: citiesPayload,
+  refresh: refreshCities,
+} = await useApiData("cities", {
+  cacheKey: "api:cities",
+});
+
+const {
+  payload: countriesPayload,
+  refresh: refreshCountries,
+} = await useApiData("countries", {
+  cacheKey: "api:countries",
+});
+
+const {
+  payload: mainCategoriesPayload,
+  refresh: refreshMainCategories,
+} = await useApiData("main-categories", {
+  cacheKey: `api:settings:main-categories:${locale.value || "ar"}`,
+  query: computed(() => ({ lang: locale.value || "ar" })),
+  watch: [locale],
+});
+
 // Validation Function
 function validate() {
   let allInputs = document.querySelectorAll(".validInputs");
@@ -1206,68 +1225,98 @@ function validate() {
 }
 
 // Get All cities
-const getCities = async () => {
-  await axios
-    .get("cities")
-    .then((res) => {
-      if (response(res) == "success") {
-        cities.value = res.data.data;
+const getCities = async (shouldRefresh = false) => {
+  if (shouldRefresh) {
+    await Promise.all([refreshCities(), refreshCountries()]);
+  }
 
-        for (let i = 0; i < cities.value.length; i++) {
-          if (cities.value[i].id == city_id.value) {
-            city.value = cities.value[i];
-          }
-        }
-      }
-    })
-    .catch((err) => console.log(err));
+  cities.value = citiesPayload.value || [];
+  countries.value = countriesPayload.value || countries.value;
+
+  for (let i = 0; i < cities.value.length; i++) {
+    if (cities.value[i].id == city_id.value) {
+      city.value = cities.value[i];
+    }
+  }
+
+  if (!selectedCountry.value && countries.value.length) {
+    selectedCountry.value = { ...countries.value[0] };
+  }
 };
 
 //  get profile data
-const profileData = async () => {
-  await axios
-    .get("user/profile", config.value)
-    .then((res) => {
-      const data = res.data.data;
-      name.value = data.name;
-      name_ar.value = data.name_ar || data.name || "";
-      name_en.value = data.name_en || data.name || "";
-      provider_type.value = data.provider_type || "";
-      city_id.value = data.city?.id;
-      // pick from list if available, otherwise fallback to API object
-      city.value =
-        (cities.value || []).find((c) => c.id == city_id.value) ||
-        data.city ||
-        null;
-      phone.value = data.phone;
-      email.value = data.email;
+const profileData = async (shouldRefresh = false) => {
+  if (shouldRefresh) {
+    await refreshInlineProfile();
+  }
+  const data = inlineProfilePayload.value;
+  if (!data) return;
 
-      description_ar.value = data.description_ar || data.description || "";
-      description_en.value = data.description_en || data.description || "";
-      commercial_number.value =
-        data.commercial_registration_number || data.commercial_number || "";
-      main_section_id.value =
-        data.main_section?.id || data.main_section_id || null;
-      sub_section_id.value =
-        data.sub_section?.id || data.sub_section_id || null;
+  const localizedName =
+    data.name?.ar || data.name?.en || data.name || "";
+  const localizedDescription =
+    data.description?.ar || data.description?.en || data.description || "";
 
-      bank_name.value = data.bank_name || "";
-      account_name.value = data.bank_account_name || data.account_name || "";
-      account_number.value =
-        data.bank_account_number || data.account_number || "";
-      iban.value = data.iban || "";
+  name.value = localizedName;
+  name_ar.value = data.name?.ar || localizedName;
+  name_en.value = data.name?.en || localizedName;
+  provider_type.value =
+    data.type?.name || data.provider_type || provider_type.value || "";
+  city_id.value = data.city?.id || data.city_id || null;
+  city.value =
+    (cities.value || []).find((c) => c.id == city_id.value) ||
+    data.city ||
+    null;
+  phone.value = data.phone;
+  email.value = data.email;
 
-      uploadedLogo.value = data.image || null;
-      uploadedIdentityImage.value = data.identity_image || null;
-      uploadedCommercialImage.value =
-        data.commercial_registration_image || null;
+  description_ar.value = data.description?.ar || localizedDescription;
+  description_en.value = data.description?.en || localizedDescription;
+  commercial_number.value = data.commercial_number || data.commercial_registration_number || "";
+  main_section_id.value =
+    data.main_categories?.map((category) => category.id) ||
+    data.main_section?.id ||
+    data.main_section_id ||
+    [];
+  sub_section_id.value =
+    data.sub_categories?.map((category) => category.id) ||
+    data.sub_section?.id ||
+    data.sub_section_id ||
+    [];
 
-      if (selectedCountry.value && data.country_code) {
-        selectedCountry.value.key = normalizeCountryCode(data.country_code);
-      }
-    })
-    .catch((err) => console.log(err));
+  bank_name.value = data.bank_account_info?.bank_name || data.bank_name || bank_name.value || "";
+  account_name.value =
+    data.bank_account_info?.bank_account_name ||
+    data.bank_account_name ||
+    data.account_name ||
+    account_name.value ||
+    "";
+  account_number.value =
+    data.bank_account_info?.bank_account_number ||
+    data.bank_account_number ||
+    data.account_number ||
+    account_number.value ||
+    "";
+  iban.value = data.bank_account_info?.iban || data.iban || iban.value || "";
+
+  uploadedLogo.value = data.image || uploadedLogo.value || null;
+  uploadedIdentityImage.value =
+    data.identity_image || uploadedIdentityImage.value || null;
+  uploadedCommercialImage.value =
+    data.commercial_image || data.commercial_registration_image || uploadedCommercialImage.value || null;
+
+  const normalizedCountryCode = normalizeCountryCode(data.country_code);
+  const matchedCountry = (countries.value || []).find(
+    (country) => normalizeCountryCode(country.key) === normalizedCountryCode,
+  );
+  if (matchedCountry) {
+    selectedCountry.value = { ...matchedCountry };
+  } else if (selectedCountry.value) {
+    selectedCountry.value.key = normalizedCountryCode;
+  }
 };
+
+await Promise.all([getCities(), getMainSections(), getProfile(), profileData()]);
 
 // update profile
 const editProfile = async () => {
@@ -1368,11 +1417,6 @@ onBeforeUnmount(() => {
 });
 
 onMounted(async () => {
-  await getCities();
-  await getMainSections();
-  await getProfile();
-  await profileData();
-
   initializeNotificationSettings();
 });
 
@@ -1381,8 +1425,7 @@ watch(
   async (newVal) => {
     if (newVal === true) {
       isLoadingProfile.value = true;
-      await profileData();
-      await getCities();
+      await Promise.all([profileData(true), getCities(true)]);
 
       isLoadingProfile.value = false;
     }

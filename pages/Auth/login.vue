@@ -337,9 +337,7 @@ const confirmSubscription = async () => {
 
     .with_cun_select :deep(.p-dropdown),
     .with_cun_select :deep(.p-select) {
-        height: 42px;
-        display: flex;
-        align-items: center;
+
         padding: 0 8px;
         border: 0;
     }

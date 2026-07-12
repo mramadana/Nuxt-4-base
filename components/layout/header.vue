@@ -45,7 +45,7 @@
                 <!-- <img src="@/assets/images/common/customer_service.svg" alt="customer_service" /> -->
               </button>
 
-              <NuxtLink to="/Notifications" class="notification ml-5" :class="{
+              <NuxtLink v-if="isLoggedIn" to="/Notifications" class="notification ml-5" :class="{
                 'hide-badge':
                   !updateNotificationCount || updateNotificationCount === 0,
               }">
@@ -107,9 +107,6 @@ defineProps({
 // Toast
 const { successToast, errorToast } = toastMsg();
 
-// Axios
-const axios = useApi();
-
 // store
 const store = useAuthStore();
 const globalStore = useGlobalStore();
@@ -125,15 +122,32 @@ const { logoutHandler } = store;
 const notifCount = ref(null);
 const logoutDialog = ref(false);
 const termsDialog = ref(false);
-const termsContent = ref("");
-const termsLoading = ref(false);
+const notificationCountPayload = ref(null);
+let refreshNotificationCount = async () => {};
 
-// config
-let config = {
-  headers: {
-    Authorization: `Bearer ${token.value}`,
-  },
-};
+if (isLoggedIn.value) {
+  const notificationData = await useApiData("general/count-notifications", {
+    auth: true,
+    cacheKey: "api:header:notification-count",
+  });
+
+  watchEffect(() => {
+    notificationCountPayload.value = notificationData.payload.value;
+  });
+
+  refreshNotificationCount = notificationData.refresh;
+}
+
+const {
+  data: termsResponse,
+  pending: termsLoading,
+  execute: loadTermsContent,
+} = await useApiFetch("general/terms/providers-terms", {
+  immediate: false,
+  cacheKey: "api:header:provider-terms",
+});
+
+const termsContent = computed(() => termsResponse.value?.data || "");
 const logout = async () => {
   // Get Returned Data From Store
   logoutDialog.value = false;
@@ -148,38 +162,19 @@ const toggleActive = () => {
   emit("toggle-active");
 };
 
-// Get Terms and Conditions
-const getTermsContent = async () => {
-  termsLoading.value = true;
-  try {
-    const res = await axios.get("general/terms/providers-terms");
-    if (response(res) === "success") {
-      termsContent.value = res.data.data;
-    }
-  } catch (err) {
-    console.error(err);
-  } finally {
-    termsLoading.value = false;
-  }
-};
-
-// get notifications Count
-const getNotificationsCount = async () => {
-  try {
-    const res = await axios.get("general/count-notifications", config);
-    if (response(res) === "success") {
-      updateNotificationCount.value = res.data.data.count;
-    }
-  } catch (err) {
-    console.error(err);
-  }
-};
+watchEffect(() => {
+  const count = notificationCountPayload.value?.count || 0;
+  updateNotificationCount.value = count;
+  notifCount.value = count;
+});
 
 // route get notif count
 watch(
   () => route.path,
   () => {
-    getNotificationsCount();
+    if (isLoggedIn.value) {
+      refreshNotificationCount();
+    }
   }
 );
 
@@ -192,7 +187,7 @@ let chatRedirectTimer = null;
 
 watch(termsDialog, (newValue) => {
   if (newValue && !termsContent.value) {
-    getTermsContent();
+    loadTermsContent();
   }
 
   if (newValue) {
@@ -203,10 +198,6 @@ watch(termsDialog, (newValue) => {
   } else {
     clearTimeout(chatRedirectTimer);
   }
-});
-
-onMounted(() => {
-  getNotificationsCount();
 });
 
 onMounted(() => {

@@ -34,15 +34,6 @@ const props = defineProps({
     }
 });
 
-// success response
-const { response } = responseApi();
-
-// Toast
-const { errorToast } = toastMsg();
-
-// Axios
-const axios = useApi();
-
 // pinia store
 import { useAuthStore } from '~/stores/auth';
 
@@ -52,49 +43,38 @@ import { useAuthStore } from '~/stores/auth';
 const store = useAuthStore();
 const { token } = storeToRefs(store);
 
-// config
-const config = computed(() => ({
-    headers: { Authorization: `Bearer ${token.value}` }
-}));
-
-// loading
-const loading = ref(true);
-
-// complaints
-const complaints = ref([]);
-
 // Paginator
 const currentPage = ref(1);
 const pageLimit = ref();
 const totalPage = ref();
 
-/******************* Methods *******************/
+const {
+    payload: complaintsPayload,
+    pending: loading,
+    refresh: refreshComplaints,
+} = await useApiData(`complaints`, {
+    auth: true,
+    query: computed(() => ({
+        page: currentPage.value,
+        ...(props.status ? { status: props.status } : {}),
+    })),
+    watch: [currentPage, () => props.status],
+});
 
-// getComplaints
-const getComplaints = async () => {
-    loading.value = true;
-    const statusParam = props.status ? `&status=${props.status}` : '';
-    await axios.get(`complaints?page=${currentPage.value}${statusParam}`, config.value).then(res => {
-        if (response(res) == "success") {
-            complaints.value = res.data.data.complaints;
-            totalPage.value = res.data.data.pagination.total_items;
-            pageLimit.value = res.data.data.pagination.per_page;
-        } else {
-            errorToast(res.data.msg);
-        }
-        loading.value = false;
-    }).catch(err => {
-        console.error(err);
-        loading.value = false;
-    });
-}
+const complaints = computed(() => complaintsPayload.value?.complaints || []);
+
+watchEffect(() => {
+    const pagination = complaintsPayload.value?.pagination || {};
+    totalPage.value = pagination.total_items || 0;
+    pageLimit.value = pagination.per_page || 20;
+});
+
+/******************* Methods *******************/
 
 // Paginate Function
 const onPaginate = (e) => {
-    loading.value = true;
     currentPage.value = e.page + 1;
     window.scrollTo(0, 0);
-    getComplaints();
 };
 
 /******************* Computed *******************/
@@ -106,7 +86,7 @@ let showPaginate = computed(() => {
 
 watch(() => props.status, async () => {
     currentPage.value = 1;
-    await getComplaints();
+    await refreshComplaints();
 });
 
 const reloadTrigger = inject('reloadComplaints', ref(0));
@@ -114,18 +94,13 @@ const reloadTrigger = inject('reloadComplaints', ref(0));
 watch(reloadTrigger, async (newVal) => {
     if (newVal > 0) {
         currentPage.value = 1;
-        await getComplaints();
+        await refreshComplaints();
     }
 });
 
 /******************* Expose *******************/
 defineExpose({
-    getComplaints
-});
-
-/******************* Mounted *******************/
-onMounted(async () => {
-    await getComplaints();
+    getComplaints: refreshComplaints
 });
 </script>
 

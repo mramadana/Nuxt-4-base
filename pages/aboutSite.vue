@@ -18,30 +18,17 @@ definePageMeta({
     name: "Global.about_site",
 });
 
-const PageSeo = ref(null);
 const { getSeoData, checkSeoKey } = useSeo();
+await getSeoData();
 
-onMounted(async () => {
-    await getSeoData();
-    PageSeo.value = checkSeoKey("about");
+const pageSeo = computed(() => checkSeoKey("about") || null);
 
-    useHead({
-        title: PageSeo.value?.meta_title,
+useHead(() => ({
+        title: pageSeo.value?.meta_title,
         meta: [
-            { name: 'description', content: PageSeo.value?.meta_description },
-            { name: 'keywords', content: PageSeo.value?.meta_keywords },
-            { property: 'og:url', content: PageSeo.value?.meta_url }
+            { name: 'description', content: pageSeo.value?.meta_description },
+            { name: 'keywords', content: pageSeo.value?.meta_keywords },
+            { property: 'og:url', content: pageSeo.value?.meta_url }
         ]
-    });
-})
-
-watch(
-    () => PageSeo.value,
-    (newVal) => {
-        if (!newVal) {
-            PageSeo.value = checkSeoKey("about");
-        }
-    },
-    { immediate: true }
-);
+}));
 </script>

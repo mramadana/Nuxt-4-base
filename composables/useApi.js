@@ -1,7 +1,8 @@
 import axios from "axios";
 
 export const useApi = () => {
-  const baseURL = "https://dashboard.asastamim.com/api/";
+  const config = useRuntimeConfig();
+  const baseURL = config.public.apiBaseUrl || "https://dashboard.asastamim.com/api/";
 
   if(process.client){
     axios.defaults.headers.lang = localStorage.getItem("locale") || "ar";

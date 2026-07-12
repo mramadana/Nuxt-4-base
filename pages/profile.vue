@@ -117,23 +117,15 @@ definePageMeta({
 });
 // pinia store
 
-// success response
-const { response } = responseApi();
-
-const PageSeo = ref(null);
-
 const { getSeoData, checkSeoKey } = useSeo();
-
-// // Axios
-const axios = useApi();
+await getSeoData();
+const pageSeo = computed(() => checkSeoKey("profile") || null);
 
 
 /******************* Data *******************/
 
 // Store
 const store = useAuthStore();
-
-const { token } = storeToRefs(store);
 
 const selectedCountry = ref(null)
 const countries = ref([]);
@@ -156,100 +148,63 @@ const email = ref('');
 
 const editProfileform = ref(null);
 
-// config
-const config = {
-    headers: { Authorization: `Bearer ${token.value}` }
-};
-
-//  get profile data
-const profile = async () => {
-    await axios.get('profile', config).then(res => {
-        name.value = res.data.data.name;
-        phone.value = res.data.data.phone;
-        city_id.value = res.data.data.city_id;
-        neighborhood_id.value = res.data.data.neighborhood_id;
-        email.value = res.data.data.email;
-        if (selectedCountry.value) {
-            selectedCountry.value.key = res.data.data.country_code;
-        }
-    }).catch(err => console.log(err));
-}
-
-// Get All cities
-const getCities = async () => {
-    await axios.get('cities').then(res => {
-        if (response(res) == "success") {
-            cities.value = res.data.data;
-            for (let i = 0; i < cities.value.length; i++) {
-                if (cities.value[i].id == city_id.value) {
-                    city.value = cities.value[i];
-                }
-            }
-        }
-    }).catch(err => console.log(err));
-};
-
-// Get All neighborhoods
-const getNeighborhoods = async (cityId) => {
-    if (!cityId) {
-        neighborhoods.value = [];
-        neighborhood.value = null;
-        return;
-    }
-    
-    await axios.get(`neighborhoods/${cityId}`).then(res => {
-        if (response(res) == "success") {
-            neighborhoods.value = res.data.data;
-            for (let i = 0; i < neighborhoods.value.length; i++) {
-                if (neighborhoods.value[i].id == neighborhood_id.value) {
-                    neighborhood.value = neighborhoods.value[i];
-                }
-            }
-        } else {
-            neighborhoods.value = [];
-        }
-    }).catch(err => {
-        console.log(err);
-        neighborhoods.value = [];
-    });
-};
-
-onMounted(async () => {
-    await profile();
-    await getCities();
-    if (city_id.value) {
-        await getNeighborhoods(city_id.value);
-    }
-    const result = await store.getCountriesHandler();
-
-    if (result.status === "success") {
-        const defaultCountry = store.countries.find(country => country.id == 1);
-
-        if (defaultCountry) {
-            selectedCountry.value = { ...defaultCountry };
-        }
-    }
-
-    await getSeoData();
-    PageSeo.value = checkSeoKey("profile");
-
-    useHead({
-        title: PageSeo.value?.meta_title,
-        meta: [
-            { name: 'description', content: PageSeo.value?.meta_description },
-            { name: 'keywords', content: PageSeo.value?.meta_keywords },
-            { property: 'og:url', content: PageSeo.value?.meta_url }
-        ]
-    });
+const { payload: profilePayload } = await useApiData("provider/profile", {
+    auth: true,
+    cacheKey: "api:profile",
 });
 
-watch(
-    () => PageSeo.value,
-    (newVal) => {
-        if (!newVal) {
-            PageSeo.value = checkSeoKey("profile");
-        }
-    },
-    { immediate: true }
-);
+const { payload: citiesPayload } = await useApiData("cities", {
+    cacheKey: "api:cities",
+});
+
+const { payload: countriesPayload } = await useApiData("countries", {
+    cacheKey: "api:countries",
+});
+
+const initialCityId = profilePayload.value?.city?.id || profilePayload.value?.city_id || null;
+const neighborhoodData = initialCityId
+    ? await useApiData(`neighborhoods/${initialCityId}`, {
+        cacheKey: `api:neighborhoods:${initialCityId}`,
+      })
+    : null;
+
+watchEffect(() => {
+    const profileData = profilePayload.value;
+    if (!profileData) return;
+
+    name.value = profileData.name?.ar || profileData.name?.en || profileData.name || "";
+    phone.value = profileData.phone || "";
+    city_id.value = profileData.city?.id || profileData.city_id || null;
+    neighborhood_id.value = profileData.neighborhood_id || null;
+    email.value = profileData.email || "";
+});
+
+watchEffect(() => {
+    cities.value = citiesPayload.value || [];
+    city.value = cities.value.find((item) => item.id == city_id.value) || null;
+});
+
+watchEffect(() => {
+    countries.value = countriesPayload.value || [];
+    const fallbackCountry = countries.value.find((country) => country.id == 1) || null;
+    const selectedByCode = countries.value.find((country) => country.key == profilePayload.value?.country_code) || fallbackCountry;
+    if (selectedByCode) {
+        selectedCountry.value = { ...selectedByCode };
+    }
+});
+
+watchEffect(() => {
+    neighborhoods.value = neighborhoodData?.payload.value || [];
+    neighborhood.value =
+        neighborhoods.value.find((item) => item.id == neighborhood_id.value) || null;
+});
+
+useHead(() => ({
+    title: pageSeo.value?.meta_title,
+    meta: [
+        { name: 'description', content: pageSeo.value?.meta_description },
+        { name: 'keywords', content: pageSeo.value?.meta_keywords },
+        { property: 'og:url', content: pageSeo.value?.meta_url }
+    ]
+}));
 </script>

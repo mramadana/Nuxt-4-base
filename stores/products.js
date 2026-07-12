@@ -1,6 +1,15 @@
 import { defineStore } from "pinia";
 
-const axios = useApi();
+const axios = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      const client = useApi();
+      const value = client[prop];
+      return typeof value === "function" ? value.bind(client) : value;
+    },
+  },
+);
 
 export const useProductsStore = defineStore("products", {
   state: () => ({

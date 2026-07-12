@@ -167,6 +167,18 @@ const { toastNotify } = toastMsg();
 
 // route
 const route = useRoute()
+const roomMessagesEndpoint = computed(
+  () => `general/get-room-messages/${route.query.id}`,
+);
+
+const {
+  payload: roomMessagesPayload,
+  refresh: refreshRoomMessages,
+} = await useApiData(() => roomMessagesEndpoint.value, {
+  auth: true,
+  query: computed(() => ({ page: 1 })),
+  cacheKey: `api:chat-room:${route.query.id}:page-1`,
+});
 
 
 import { io } from 'socket.io-client';
@@ -223,6 +235,38 @@ const pagination = ref({
 });
 
 const currentPage = ref(1);
+const hasInitialMessagesHydrated = ref(false);
+
+const applyRoomMessagesPayload = async (payload, append = false, previousHeight = 0) => {
+  if (!payload) return;
+
+  const newMessages = payload.messages?.data?.reverse?.() || [];
+
+  if (append) {
+    messages.value = [...newMessages, ...messages.value];
+    await nextTick();
+    const newHeight = messagesArea.value?.scrollHeight || 0;
+    if (messagesArea.value) {
+      messagesArea.value.scrollTop = newHeight - previousHeight;
+    }
+  } else {
+    messages.value = newMessages;
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+  }
+
+  recieverData.value = payload.members?.[0] || {};
+  receiver_id.value = payload.members?.[0]?.id || null;
+  currentPage.value = payload.messages?.pagination?.current_page || 1;
+  pagination.value.total_pages = payload.messages?.pagination?.total_pages || 1;
+};
+
+watchEffect(async () => {
+  if (hasInitialMessagesHydrated.value || !roomMessagesPayload.value) return;
+  await applyRoomMessagesPayload(roomMessagesPayload.value, false);
+  hasInitialMessagesHydrated.value = true;
+});
 
 const handleFile = (e) => {
   const file = e.target.files[0];
@@ -324,6 +368,12 @@ const getRoomMessages = async (page = 1, append = false) => {
             previousHeight = messagesArea.value.scrollHeight;
         }
 
+        if (page === 1 && !append) {
+            await refreshRoomMessages();
+            await applyRoomMessagesPayload(roomMessagesPayload.value, false);
+            return;
+        }
+
         const res = await axios.get(`general/get-room-messages/${route.query.id}?page=${page}`, config.value);
 
         if (response(res) == 'success') {
@@ -378,8 +428,6 @@ onMounted(() => {
   socket.value.emit("enter-chat", {
     room_id: route.query.id,
   });
-
-  getRoomMessages();
 
   setTimeout(() => {
     scrollToBottom();

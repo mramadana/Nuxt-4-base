@@ -50,7 +50,7 @@
     
                 <button type="button" @click="chargeWallet" class="custom-btn md mr-auto">
                     {{ $t('Global.charge') }} 
-                    <span class="spinner-border spinner-border-sm" v-if="loading" role="status" aria-hidden="true"></span>
+                    <span class="spinner-border spinner-border-sm" v-if="chargeLoading" role="status" aria-hidden="true"></span>
                 </button>
             </div>
         </Dialog>
@@ -73,20 +73,21 @@
 
     const successfullySent = ref(false);
 
-    const walletValue = ref({});
-
    const redirectUrl = ref(null);
-
-    const PageSeo = ref(null);
-    
     const { getSeoData, checkSeoKey } = useSeo();
+    await getSeoData();
+    const pageSeo = computed(() => checkSeoKey("wallet") || null);
 
     // Store
     const store = useAuthStore();
     const { token } = storeToRefs(store);
 
-    // loading
-    const loading = ref(true);
+    const { payload: walletPayload, pending: loading, refresh: refreshWallet } = await useApiData('wallet-balance', {
+        auth: true,
+        cacheKey: 'api:wallet-balance'
+    });
+    const walletValue = computed(() => walletPayload.value || {});
+    const chargeLoading = ref(false);
 
     // success response
     const { response } = responseApi();
@@ -102,74 +103,47 @@
         headers: { Authorization: `Bearer ${token.value}` }
     };
 
-    // get wallet
-    const getWallet = async () => {
-        await axios.get(`wallet-balance`, config).then(res => {
-        if (response(res) == "success") {
-            walletValue.value = res.data.data;
-        }
-        loading.value = false;
-        }).catch(err => {
-            console.error(err);
-        });
-    };
-
     const chargeWallet = async () => {
-        loading.value = true;
+        chargeLoading.value = true;
         const fd = new FormData();
         fd.append('balance', amount.value);
         fd.append('platform', "web");
         if (amount.value == '') {
             errorToast(t(`order.enter_amount`));
-            loading.value = false;
+            chargeLoading.value = false;
         } else if (amount.value <= 0) {
             errorToast(t(`order.enter_amount`));
             amount.value = null;
-            loading.value = false;
+            chargeLoading.value = false;
         } else {
-
-            await axios.post(`charge-wallet-online`, fd, config).then(res => {
+            try {
+                const res = await axios.post(`charge-wallet-online`, fd, config);
                 if (response(res) == "success") {
                     amount.value = null;
                     successfullySent.value = false;
                     redirectUrl.value = res.data.data;
+                    await refreshWallet();
                     // Redirect to payment page in the same window
                     window.location.href = redirectUrl.value;
                     successToast(res.data.msg);
                 } else {
                     errorToast(res.data.msg);
                 }
-                loading.value = false;
-            }).catch(err => {
+            } catch (err) {
                 console.error(err);
-            });
+            } finally {
+                chargeLoading.value = false;
+            }
         }
         
     };
 
-    onMounted( async () => {
-      await getWallet();
-      await getSeoData();
-        PageSeo.value = checkSeoKey("wallet");
-
-        useHead({
-            title: PageSeo.value?.meta_title,
+    useHead(() => ({
+            title: pageSeo.value?.meta_title,
             meta: [
-                { name: 'description', content: PageSeo.value?.meta_description },
-                { name: 'keywords', content: PageSeo.value?.meta_keywords },
-                { property: 'og:url', content: PageSeo.value?.meta_url }
+                { name: 'description', content: pageSeo.value?.meta_description },
+                { name: 'keywords', content: pageSeo.value?.meta_keywords },
+                { property: 'og:url', content: pageSeo.value?.meta_url }
             ]
-        });
-
-    })
-
-    watch(
-        () => PageSeo.value,
-        (newVal) => {
-            if (!newVal) {
-            PageSeo.value = checkSeoKey("wallet");
-            }
-        },
-        { immediate: true }
-    );
+        }));
 </script>

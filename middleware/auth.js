@@ -2,15 +2,13 @@
 import { useAuthStore } from '~/stores/auth';
 
 export default defineNuxtRouteMiddleware((to, from) => {
-  // const store = useAuthStore();
-  const { isLoggedIn, Globaldialog, returnRequests } = storeToRefs(useAuthStore());
+  const authStore = useAuthStore();
+  const { isLoggedIn, Globaldialog, returnRequests } = storeToRefs(authStore);
 
   // General Orders (myorders)
   if (to.path === '/myorders' || to.path === '/myorders/purchaseOrders') {
     if (to.path !== '/myorders/purchaseOrders/new') {
-      setTimeout(() => {
-        returnRequests.value = false;
-      }, 100);
+      returnRequests.value = false;
       return navigateTo('/myorders/purchaseOrders/new');
     }
   }
@@ -25,9 +23,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
   // Private Orders (specialOrder)
   if (to.path === '/specialOrder' || to.path === '/specialOrder/purchaseOrders') {
     if (to.path !== '/specialOrder/purchaseOrders/waitPriceOffer') {
-      setTimeout(() => {
-        returnRequests.value = false;
-      }, 100);
+      returnRequests.value = false;
       return navigateTo('/specialOrder/purchaseOrders/waitPriceOffer');
     }
   }
@@ -40,21 +36,13 @@ export default defineNuxtRouteMiddleware((to, from) => {
   }
 
   if (!isLoggedIn.value && to.meta.middleware == "auth") {
-      Globaldialog.value = true;
-      console.log('00');
-      setTimeout(() => {
-        return navigateTo("/");
-        }, 100);
+    Globaldialog.value = true;
+    return navigateTo("/");
+  }
 
-    } else {
-      console.log('11');
-    }
-
-    if (to.fullPath == from.fullPath && isLoggedIn.value == true && to.meta.middleware == "auth") {
-        setTimeout(() => {
-          return navigateTo(`${from.fullPath}`);
-        }, 100);
-      }
+  if (to.fullPath == from.fullPath && isLoggedIn.value == true && to.meta.middleware == "auth") {
+    return navigateTo(`${from.fullPath}`);
+  }
 });
 
 

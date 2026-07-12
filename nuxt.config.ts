@@ -4,8 +4,28 @@ export default defineNuxtConfig({
 
   devtools: { enabled: false },
 
+  routeRules: {
+    "/Notifications": { prerender: false },
+    "/Notifications/**": { prerender: false },
+    "/FinancialTransactions": { prerender: false },
+    "/FinancialTransactions/**": { prerender: false },
+    "/settings": { prerender: false },
+    "/settings/**": { prerender: false },
+    "/editProfile": { prerender: false },
+    "/editProfile/**": { prerender: false },
+    "/profile": { prerender: false },
+    "/profile/**": { prerender: false },
+    "/Wallet": { prerender: false },
+    "/Wallet/**": { prerender: false },
+    "/chat": { prerender: false },
+    "/chat/**": { prerender: false },
+    "/order-details/**": { prerender: false },
+  },
+
   runtimeConfig: {
     public: {
+      apiBase: process.env.NUXT_PUBLIC_API_BASE_URL || "https://dashboard.asastamim.com/api/",
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || "https://dashboard.asastamim.com/api/",
       googleMapsKey: process.env.NUXT_PUBLIC_GOOGLE_MAPS_KEY || "AIzaSyBNLoYGrbnQI_GMqHt6m0PSN9yA7Zvq7gA",
     },
   },
@@ -74,5 +94,3 @@ export default defineNuxtConfig({
     },
   },
 })
-
-

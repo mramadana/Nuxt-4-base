@@ -123,9 +123,6 @@
 </template>
 
 <script setup>
-import { storeToRefs } from "pinia";
-import { useAuthStore } from "~/stores/auth";
-
 definePageMeta({
   name: "Titles.order_details",
   authIsRequired: true,
@@ -134,25 +131,37 @@ definePageMeta({
 
 const route = useRoute();
 const id = route.params.id;
-const axios = useApi();
-const { response } = responseApi();
-const { errorToast } = toastMsg();
-const store = useAuthStore();
-const { token } = storeToRefs(store);
-
-const config = computed(() => ({
-  headers: {
-    Authorization: `Bearer ${token.value}`,
-  },
-}));
-
-const loadingDetails = ref(true);
-const loadingOrders = ref(true);
-const settlementDetails = ref(null);
-const settlementOrders = ref([]);
 const currentPage = ref(1);
 const pageLimit = ref(20);
 const totalItems = ref(0);
+
+const {
+  payload: settlementDetailsPayload,
+  pending: loadingDetails,
+} = await useApiData(`provider/settlements/orders-details/${id}`, {
+  auth: true,
+  cacheKey: `api:settlement-details:${id}`,
+});
+
+const {
+  payload: settlementOrdersPayload,
+  pending: loadingOrders,
+} = await useApiData(`provider/settlements/orders/${id}`, {
+  auth: true,
+  query: computed(() => ({ page: currentPage.value })),
+  watch: [currentPage],
+});
+
+const settlementDetails = computed(() => settlementDetailsPayload.value || null);
+const settlementOrders = computed(
+  () => settlementOrdersPayload.value?.settlement_orders || [],
+);
+
+watchEffect(() => {
+  const pagination = settlementOrdersPayload.value?.pagination || {};
+  totalItems.value = pagination.total_items || 0;
+  pageLimit.value = pagination.per_page || 20;
+});
 
 const defaultCurrency = computed(() => settlementOrders.value[0]?.currency || "ر.س");
 const showPaginate = computed(() => totalItems.value > pageLimit.value);
@@ -223,13 +232,8 @@ const fetchSettlementOrders = async () => {
 const onPaginate = (e) => {
   currentPage.value = e.page + 1;
   window.scrollTo({ top: 0, behavior: "smooth" });
-  fetchSettlementOrders();
 };
 
-onMounted(() => {
-  fetchSettlementDetails();
-  fetchSettlementOrders();
-});
 </script>
 
 <style scoped lang="scss">

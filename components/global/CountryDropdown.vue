@@ -39,9 +39,11 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
+const { payload: countriesPayload, isSuccess } = await useApiData("countries", {
+    cacheKey: "api:countries",
+});
 
-const store = useAuthStore();
-const { countries } = storeToRefs(store);
+const countries = computed(() => countriesPayload.value || []);
 
 const internalValue = computed({
     get() {
@@ -63,12 +65,11 @@ const selectDefaultCountry = () => {
 
 watch(countries, selectDefaultCountry, { immediate: true });
 
-onMounted(async () => {
-    const result = await store.getCountriesHandler();
-    if (result.status === 'success') {
+watch(isSuccess, (value) => {
+    if (value) {
         selectDefaultCountry();
     }
-});
+}, { immediate: true });
 </script>
 
 <style lang="scss" scoped>

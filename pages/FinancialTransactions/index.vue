@@ -219,10 +219,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import { storeToRefs } from "pinia";
 import { useI18n } from "vue-i18n";
-import { useAuthStore } from "~/stores/auth";
 
 definePageMeta({
   name: "Titles.payment_requests",
@@ -231,27 +228,12 @@ definePageMeta({
 });
 
 const { t } = useI18n({ useScope: "global" });
-const axios = useApi();
+const request = useApiMutation();
 const { response } = responseApi();
 const { successToast, errorToast } = toastMsg();
-const store = useAuthStore();
-const { token } = storeToRefs(store);
-
-// Auth configurations
-const config = computed(() => ({
-  headers: {
-    Authorization: `Bearer ${token.value}`,
-  },
-}));
 
 // State variables
 const activeTab = ref("due"); // 'due', 'pending', 'finished'
-const settlements = ref([]);
-const details = ref(null);
-
-// Loading states
-const detailsLoading = ref(false);
-const ordersLoading = ref(false);
 const submitLoading = ref(false);
 
 // Pagination
@@ -259,56 +241,51 @@ const currentPage = ref(1);
 const pageLimit = ref(20);
 const totalPage = ref(0);
 
+const settlementsEndpoint = computed(() => {
+  if (activeTab.value === "pending") {
+    return "provider/settlements/pending";
+  }
+
+  if (activeTab.value === "finished") {
+    return "provider/settlements/finished";
+  }
+
+  return "provider/settlements/index";
+});
+
+const {
+  payload: detailsPayload,
+  pending: detailsLoading,
+  refresh: refreshDueDetails,
+} = await useApiData("provider/settlements/index-details", {
+  auth: true,
+  cacheKey: "api:settlements:due-details",
+});
+
+const {
+  payload: settlementsPayload,
+  pending: ordersLoading,
+  refresh: refreshSettlements,
+} = await useApiData(() => settlementsEndpoint.value, {
+  auth: true,
+  query: computed(() => ({ page: currentPage.value })),
+  watch: [activeTab, currentPage],
+});
+
+const details = computed(() => detailsPayload.value || null);
+const settlements = computed(
+  () => settlementsPayload.value?.settlements || [],
+);
+
+watchEffect(() => {
+  const pagination = settlementsPayload.value?.pagination || {};
+  totalPage.value = pagination.total_items || 0;
+  pageLimit.value = pagination.per_page || 20;
+});
+
 const showPaginate = computed(() => {
   return totalPage.value > pageLimit.value;
 });
-
-// Fetch top details cards (only for "due" tab)
-const fetchDueDetails = async () => {
-  detailsLoading.value = true;
-  try {
-    const res = await axios.get("provider/settlements/index-details", config.value);
-    if (response(res) === "success" || res.data.key === "success") {
-      details.value = res.data.data;
-    }
-  } catch (err) {
-    console.error("Fetch due details error:", err);
-  } finally {
-    detailsLoading.value = false;
-  }
-};
-
-// Fetch list of settlements according to active tab
-const fetchSettlements = async () => {
-  ordersLoading.value = true;
-  let endpoint = "";
-
-  if (activeTab.value === "due") {
-    endpoint = `provider/settlements/index?page=${currentPage.value}`;
-  } else if (activeTab.value === "pending") {
-    endpoint = `provider/settlements/pending?page=${currentPage.value}`;
-  } else if (activeTab.value === "finished") {
-    endpoint = `provider/settlements/finished?page=${currentPage.value}`;
-  }
-
-  try {
-    const res = await axios.get(endpoint, config.value);
-    if (response(res) === "success" || res.data.key === "success") {
-      settlements.value = res.data.data.settlements || [];
-      totalPage.value = res.data.data.pagination?.total_items || 0;
-      pageLimit.value = res.data.data.pagination?.per_page || 20;
-    } else {
-      settlements.value = [];
-      totalPage.value = 0;
-    }
-  } catch (err) {
-    console.error("Fetch settlements error:", err);
-    settlements.value = [];
-    totalPage.value = 0;
-  } finally {
-    ordersLoading.value = false;
-  }
-};
 
 // Send settlement request
 const sendSettlementRequest = async () => {
@@ -316,14 +293,19 @@ const sendSettlementRequest = async () => {
   submitLoading.value = true;
 
   try {
-    const res = await axios.post("provider/settlements/send-request", {}, config.value);
-    if (response(res) === "success" || res.data.key === "success") {
-      successToast(res.data.msg || t("Global.Saving_changes_success"));
+    const res = await request("provider/settlements/send-request", {
+      method: "POST",
+      auth: true,
+      body: {},
+    });
+
+    if (res.key === "success") {
+      successToast(res.msg || t("Global.Saving_changes_success"));
       // Refresh statistics and list
-      await fetchDueDetails();
-      await fetchSettlements();
+      await refreshDueDetails();
+      await refreshSettlements();
     } else {
-      errorToast(res.data.msg || t("Global.error_sending"));
+      errorToast(res.msg || t("Global.error_sending"));
     }
   } catch (err) {
     console.error("Send settlement request error:", err);
@@ -337,7 +319,6 @@ const sendSettlementRequest = async () => {
 const onPaginate = (e) => {
   currentPage.value = e.page + 1;
   window.scrollTo(0, 0);
-  fetchSettlements();
 };
 
 // Switch active tab
@@ -345,20 +326,7 @@ const switchTab = (tab) => {
   if (activeTab.value === tab) return;
   activeTab.value = tab;
   currentPage.value = 1;
-  settlements.value = [];
-  totalPage.value = 0;
-
-  if (tab === "due") {
-    fetchDueDetails();
-  }
-  fetchSettlements();
 };
-
-// Load initial data
-onMounted(() => {
-  fetchDueDetails();
-  fetchSettlements();
-});
 </script>
 
 <style scoped lang="scss">

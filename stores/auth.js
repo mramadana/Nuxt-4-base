@@ -1,11 +1,17 @@
 import { defineStore } from "pinia";
 
-// Toast
-// Axios
-const axios = useApi();
+const axios = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      const client = useApi();
+      const value = client[prop];
+      return typeof value === "function" ? value.bind(client) : value;
+    },
+  },
+);
 
-// success response
-const { response } = responseApi();
+const response = (...args) => responseApi().response(...args);
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -36,6 +42,20 @@ export const useAuthStore = defineStore("auth", {
     updateNotificationCount: 0
   }),
   actions: {
+    removeAuth() {
+      this.token = null;
+      this.isLoggedIn = false;
+      this.needActive = false;
+      this.newPhone = null;
+      this.currentemail = null;
+      this.currentPasword = null;
+      this.notificationToken = null;
+      this.user = {
+        phone: "",
+        country_code: "",
+      };
+    },
+
     ensureDeviceId() {
       if (!process.client) return null;
 
@@ -162,7 +182,7 @@ export const useAuthStore = defineStore("auth", {
 
       try {
         const resData = await axios.post(
-          "user/profile/update?_method=PUT",
+          "profile/update?_method=PUT",
           formData,
           config
         );

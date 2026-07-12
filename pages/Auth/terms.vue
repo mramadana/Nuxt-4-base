@@ -77,7 +77,6 @@ const { t } = useI18n({ useScope: "global" })
 
 const globalStore = useGlobalStore()
 const axios = useApi()
-const { response } = responseApi()
 const { successToast, errorToast } = toastMsg()
 const { token } = storeToRefs(
     useAuthStore()
@@ -88,13 +87,15 @@ const config = computed(() => {
     return { headers: { Authorization: `Bearer ${token.value}` } }
 });
 
-const loading = ref(true)
 const submitting = ref(false)
 const terms = ref(false)
-const termsTitle = ref("")
-const termsImage = ref("")
-const termsContent = ref("")
 const accept_create_acount = ref(false)
+const {
+    payload: termsPayload,
+    pending: loading,
+} = await useApiData("provider/terms", {
+    cacheKey: "api:provider-terms",
+});
 
 /**
  * تنظيف الـ HTML من \r\n و \\r\\n
@@ -107,31 +108,29 @@ const cleanHtml = (html) => {
         .replace(/\n/g, "")     // \n
 }
 
-/**
- * Get Terms
- */
-const getTerms = async () => {
-    loading.value = true
-    try {
-        const res = await axios.get("provider/terms")
-        if (response(res) === "success") {
-            const payload = res?.data?.data
-            if (typeof payload === "string") {
-                termsContent.value = cleanHtml(payload)
-                termsTitle.value = ""
-                termsImage.value = ""
-            } else {
-                termsContent.value = cleanHtml(payload?.content || "")
-                termsTitle.value = payload?.title || ""
-                termsImage.value = payload?.image || ""
-            }
-        }
-    } catch (err) {
-        console.error(err)
-    } finally {
-        loading.value = false
+const termsContent = computed(() => {
+    if (typeof termsPayload.value === "string") {
+        return cleanHtml(termsPayload.value);
     }
-}
+
+    return cleanHtml(termsPayload.value?.content || "");
+});
+
+const termsTitle = computed(() => {
+    if (typeof termsPayload.value === "string") {
+        return "";
+    }
+
+    return termsPayload.value?.title || "";
+});
+
+const termsImage = computed(() => {
+    if (typeof termsPayload.value === "string") {
+        return "";
+    }
+
+    return termsPayload.value?.image || "";
+});
 
 /**
  * Submit Approval
@@ -180,9 +179,6 @@ const submitApproval = async () => {
     }, 1500)
 }
 
-onMounted(() => {
-    getTerms()
-})
 </script>
 
 <style lang="scss" scoped>

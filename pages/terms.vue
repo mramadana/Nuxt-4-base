@@ -31,42 +31,36 @@ definePageMeta({
     name: "Global.terms_and_conditions",
 });
 
+const {
+    payload: termsPayload,
+    pending: loading,
+} = await useApiData("provider/terms", {
+    cacheKey: "api:provider-terms",
+});
 
-const loading = ref(true);
+const terms = computed(() => {
+    if (typeof termsPayload.value === "string") {
+        return termsPayload.value;
+    }
 
-const { response } = responseApi();
+    return termsPayload.value?.content || "";
+});
 
-const axios = useApi();
+const termsTitle = computed(() => {
+    if (typeof termsPayload.value === "string") {
+        return "";
+    }
 
-const terms = ref('');
-const termsTitle = ref('');
-const termsImage = ref('');
+    return termsPayload.value?.title || "";
+});
 
-const getTerms = async () => {
-    loading.value = true;
-    await axios.get(`provider/terms`).then(res => {
-      if (response(res) == "success") {
-        const payload = res?.data?.data;
-        if (typeof payload === 'string') {
-          terms.value = payload;
-          termsTitle.value = '';
-          termsImage.value = '';
-        } else {
-          terms.value = payload?.content || '';
-          termsTitle.value = payload?.title || '';
-          termsImage.value = payload?.image || '';
-        }
-      }
-      loading.value = false;
-    }).catch(err => {
-        console.error(err);
-        loading.value = false;
-    });
-};
+const termsImage = computed(() => {
+    if (typeof termsPayload.value === "string") {
+        return "";
+    }
 
-onMounted(() => {
-    getTerms();
-})
+    return termsPayload.value?.image || "";
+});
 
 </script>
 

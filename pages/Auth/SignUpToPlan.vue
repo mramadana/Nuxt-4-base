@@ -97,8 +97,15 @@ const { successToast, errorToast } = toastMsg()
 // Auth Store
 const authStore = useAuthStore()
 
-const packages = ref([])
-const loadingPackages = ref(false)
+const {
+  payload: packagesPayload,
+  pending: loadingPackages,
+} = await useApiData('provider/packages/subscription-packages', {
+  auth: true,
+  cacheKey: 'api:subscription-packages',
+})
+
+const packages = computed(() => packagesPayload.value || [])
 
 const selectedPackage = ref(null)
 const couponCode = ref('')
@@ -108,35 +115,6 @@ const verifyingCoupon = ref(false)
 const couponVerified = ref(false)
 const couponDiscount = ref(null)
 const subscribingToPackage = ref(false)
-
-// Fetch packages from API
-const fetchPackages = async () => {
-  loadingPackages.value = true
-
-  try {
-    const response = await axios.get('provider/packages/subscription-packages', {
-      headers: {
-        Authorization: `Bearer ${authStore.token}`
-      }
-    })
-
-    if (response.data.key === 'success') {
-      packages.value = response.data.data
-    } else {
-      errorToast(response.data.msg || t('Packages.failed_to_load_packages'))
-    }
-  } catch (err) {
-    console.error('Failed to fetch packages:', err)
-    errorToast(err.response?.data?.msg || t('Packages.failed_to_load_packages'))
-  } finally {
-    loadingPackages.value = false
-  }
-}
-
-// Fetch packages on component mount
-onMounted(() => {
-  fetchPackages()
-})
 
 const openDiscountDialog = async (pkg) => {
   selectedPackage.value = pkg

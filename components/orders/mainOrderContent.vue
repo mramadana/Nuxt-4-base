@@ -43,15 +43,6 @@ const props = defineProps({
     }
 });
 
-// success response
-const { response } = responseApi();
-
-// Toast
-const { errorToast } = toastMsg();
-
-// Axios
-const axios = useApi();
-
 // pinia store
 import { useAuthStore } from '~/stores/auth';
 
@@ -61,47 +52,34 @@ import { useAuthStore } from '~/stores/auth';
 const store = useAuthStore();
 const { token } = storeToRefs(store);
 
-// config
-const config = {
-    headers: { Authorization: `Bearer ${token.value}` }
-};
-
-// loading
-const loading = ref(true);
-
-// orders
-const orders = ref([]);
-
 // Paginator
 const currentPage = ref(1);
 const pageLimit = ref();
 const totalPage = ref();
 
-/******************* Methods *******************/
+const {
+    payload: ordersPayload,
+    pending: loading,
+} = await useApiData(() => props.ordersName, {
+    auth: true,
+    query: computed(() => ({ page: currentPage.value })),
+    watch: [currentPage, () => props.ordersName],
+});
 
-// getOrders
-const getOrders = async () => {
-    loading.value = true;
-    await axios.get(`${props.ordersName}?page=${currentPage.value}`, config).then(res => {
-        if (response(res) == "success") {
-            orders.value = res.data.data.orders;
-            totalPage.value = res.data.data.pagination.total_items;
-            pageLimit.value = res.data.data.pagination.per_page;
-        } else {
-            errorToast(res.data.msg);
-        }
-        loading.value = false;
-    }).catch(err => {
-        console.error(err);
-    });
-}
+const orders = computed(() => ordersPayload.value?.orders || []);
+
+watchEffect(() => {
+    const pagination = ordersPayload.value?.pagination || {};
+    totalPage.value = pagination.total_items || 0;
+    pageLimit.value = pagination.per_page || 20;
+});
+
+/******************* Methods *******************/
 
 // Paginate Function
 const onPaginate = (e) => {
-    loading.value = true;
     currentPage.value = e.page + 1;
     window.scrollTo(0, 0);
-    getOrders();
 };
 
 /******************* Computed *******************/
@@ -110,9 +88,4 @@ let showPaginate = computed(() => {
 });
 
 /******************* Watch *******************/
-
-/******************* Mounted *******************/
-onMounted(async () => {
-    await getOrders();
-});
 </script>

@@ -20,10 +20,6 @@
 </template>
 
 <script setup>
-const loading = ref(true);
-const { response } = responseApi();
-const axios = useApi();
-
 const about = ref('');
 const aboutTitle = ref('');
 const aboutImage = ref('');
@@ -64,43 +60,33 @@ const displayContent = computed(() => {
     return about.value;
 });
 
-const getData = async () => {
-    loading.value = true;
-    try {
-        let res;
+const request = useApiMutation();
 
+const { data: aboutResponse, pending: loading } = await useAsyncData(
+    "api:about-content",
+    async () => {
         try {
-            // New contract
-            res = await axios.get('about');
-        } catch (error) {
-            // Backward compatibility
-            res = await axios.get('general/who-we-are');
+            return await request("about", { method: "GET" });
+        } catch {
+            return await request("general/who-we-are", { method: "GET" });
         }
+    },
+);
 
-        if (response(res) === 'success') {
-            const payload = res?.data?.data;
+watchEffect(() => {
+    const payload = aboutResponse.value?.data;
+    if (!payload) return;
 
-            if (typeof payload === 'string') {
-                about.value = payload;
-                aboutTitle.value = '';
-                aboutImage.value = '';
-            } else {
-                about.value = payload?.content || '';
-                aboutTitle.value = payload?.title || '';
-                aboutImage.value = payload?.image || '';
-            }
-
-            localStorage.setItem('aboutData', about.value);
-        }
-    } catch (err) {
-        console.log(err);
-    } finally {
-        loading.value = false;
+    if (typeof payload === "string") {
+        about.value = payload;
+        aboutTitle.value = "";
+        aboutImage.value = "";
+        return;
     }
-};
 
-onMounted(async () => {
-    await getData();
+    about.value = payload?.content || "";
+    aboutTitle.value = payload?.title || "";
+    aboutImage.value = payload?.image || "";
 });
 </script>
 

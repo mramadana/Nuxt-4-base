@@ -1,17 +1,11 @@
 import { defineStore } from "pinia";
 
-// Axios
-const axios = useApi();
-
-// success response
-const { response } = responseApi();
-
 export const useGlobalStore = defineStore("global", {
   state: () => ({
     testRef: "koooooook",
     isSeoDataLoading: false,
     isSeoDataLoaded: false,
-    SeoData: useCookie("SeoData") || [],
+    SeoData: [],
   }),
   actions: {
     // async theSeo() {

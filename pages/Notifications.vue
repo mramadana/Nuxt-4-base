@@ -72,14 +72,9 @@
 
 <script setup>
 
-// success response
-const { response } = responseApi();
-
-// Axios
-const axios = useApi();
-
 // toast
 const { successToast, errorToast } = toastMsg();
+const request = useApiMutation();
 
 // pinia store
 import { useAuthStore } from '~/stores/auth';
@@ -90,29 +85,38 @@ import { useAuthStore } from '~/stores/auth';
 const store = useAuthStore();
 const { token } = storeToRefs(store);
 
-// loading
-const loading = ref(true);
-
 // delete loading
 const deleteLoading = ref(false);
 
-// notifications
-const notifications = ref([]);
-
-const PageSeo = ref(null);
-
 const { getSeoData, checkSeoKey } = useSeo();
+await getSeoData();
+const pageSeo = computed(() => checkSeoKey("notifications") || null);
 
 // Paginator
 const currentPage = ref(1);
 const pageLimit = ref();
 const totalPage = ref();
+const {
+    payload: notificationsPayload,
+    pending: loading,
+    refresh: refreshNotifications,
+} = await useApiData(`provider/notifications`, {
+    auth: true,
+    query: computed(() => ({ page: currentPage.value })),
+    watch: [currentPage],
+});
 
-// config
-const config = {
-    headers: { Authorization: `Bearer ${token.value}` }
-};
+const notifications = computed(() => {
+    const notificationsResponse = notificationsPayload.value?.notifications || notificationsPayload.value || {};
+    return notificationsResponse.data || [];
+});
 
+watchEffect(() => {
+    const notificationsResponse = notificationsPayload.value?.notifications || notificationsPayload.value || {};
+    const pagination = notificationsResponse.pagination || {};
+    totalPage.value = pagination.total_items || 0;
+    pageLimit.value = pagination.per_page || 20;
+});
 
 definePageMeta({
     authIsRequired: true,
@@ -170,68 +174,39 @@ const getNotificationRoute = (notification) => {
     return `/order-details/${orderId}`;
 };
 
-// Get notifications
-const getNotifications = async () => {
-    loading.value = true;
-    await axios.get(`provider/notifications?page=${currentPage.value}`, config).then(res => {
-        if (response(res) == "success") {
-            const notificationsResponse = res.data?.data?.notifications || res.data?.data || {};
-            const pagination = notificationsResponse.pagination || {};
-
-            notifications.value = notificationsResponse.data || [];
-            totalPage.value = pagination.total_items || 0;
-            pageLimit.value = pagination.per_page || 20;
-        }
-        loading.value = false;
-    }).catch(err => {
-        console.error(err);
-        notifications.value = [];
-        totalPage.value = 0;
-        pageLimit.value = 20;
-        loading.value = false;
-    });
-}
-
 // Paginate Function
 const onPaginate = (e) => {
-    loading.value = true;
     currentPage.value = e.page + 1;
     window.scrollTo(0, 0);
-    getNotifications();
 };
 
 // Remove Single Notification
 const removenotifation = async (index) => {
-    loading.value = true;
-    await axios.delete(`general/delete-notification/${notifications.value[index].id}`, config).then(res => {
-        if (response(res) == "success") {
-            notifications.value.splice(index, 1);
-            successToast(res.data.msg);
-        } else {
-            errorToast(res.data.msg);
-        }
-        loading.value = false;
-    }).catch(err => {
-        console.error(err);
+    const res = await request(`general/delete-notification/${notifications.value[index].id}`, {
+        method: "DELETE",
+        auth: true
     });
+    if (res.key === "success") {
+        await refreshNotifications();
+        successToast(res.msg);
+    } else {
+        errorToast(res.msg);
+    }
 }
 
 //  Delete All Notifications
 
 const deleteAll = async () => {
-    loading.value = true;
-    await axios.delete(`general/delete-notifications`, config).then(res => {
-        if (response(res) == "success") {
-            notifications.value = [];
-            successToast(res.data.msg);
-            getNotifications();
-        } else {
-            errorToast(res.data.msg);
-        }
-        loading.value = false;
-    }).catch(err => {
-        console.error(err);
+    const res = await request(`general/delete-notifications`, {
+        method: "DELETE",
+        auth: true
     });
+    if (res.key === "success") {
+        successToast(res.msg);
+        await refreshNotifications();
+    } else {
+        errorToast(res.msg);
+    }
 }
 
 /******************* Computed *******************/
@@ -242,27 +217,22 @@ let showPaginate = computed(() => {
 
 /******************* Mounted *******************/
 
-onMounted(async () => {
-    await getNotifications();
-
-    await getSeoData();
-    PageSeo.value = checkSeoKey("notifications");
-
-    useHead({
-        title: PageSeo.value?.meta_title,
+useHead(() => ({
+        title: pageSeo.value?.meta_title,
         meta: [
-            { name: 'description', content: PageSeo.value?.meta_description },
-            { name: 'keywords', content: PageSeo.value?.meta_keywords },
-            { property: 'og:url', content: PageSeo.value?.meta_url }
+            { name: 'description', content: pageSeo.value?.meta_description },
+            { name: 'keywords', content: pageSeo.value?.meta_keywords },
+            { property: 'og:url', content: pageSeo.value?.meta_url }
         ]
-    });
+    }));
 
+onMounted(async () => {
     // Listen for new notification events to refresh the list
     if (process.client) {
         const handleNewNotification = () => {
             // Reset to first page and refresh notifications
             currentPage.value = 1;
-            getNotifications();
+            refreshNotifications();
         };
 
         window.addEventListener('new-notification-received', handleNewNotification);
